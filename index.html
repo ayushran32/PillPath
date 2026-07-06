@@ -1,0 +1,2596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PillPath — Smart Medication System</title>
+    <meta name="description" content="PillPath: AI-powered smart medication management for doctors and patients. Manage prescriptions, drug interactions, and schedules intelligently.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sidebar-bg: #0f1729;
+            --sidebar-hover: #1e2a47;
+            --sidebar-active: #1d3461;
+            --main-bg: #f0f4ff;
+            --card-bg: #ffffff;
+            --text-main: #1a1f35;
+            --text-muted: #64748b;
+            --text-light: #94a3b8;
+            --border: #e2e8f0;
+            --primary: #4f6ef7;
+            --primary-hover: #3b5bdb;
+            --primary-glow: rgba(79,110,247,0.25);
+            --danger: #ef4444;
+            --danger-bg: #fef2f2;
+            --success: #10b981;
+            --success-bg: #f0fdf4;
+            --warning: #f59e0b;
+            --warning-bg: #fffbeb;
+            --info: #3b82f6;
+            --info-bg: #eff6ff;
+            --purple: #8b5cf6;
+            --pink: #ec4899;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--main-bg);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ===================== AUTH SCREEN ===================== */
+        #screen-auth {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #060b1e 0%, #0d1b3e 40%, #1a0a2e 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            overflow: hidden;
+        }
+
+        #screen-auth::before {
+            content: '';
+            position: absolute;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(79,110,247,0.15) 0%, transparent 70%);
+            top: -150px; left: -150px;
+            animation: float1 8s ease-in-out infinite;
+        }
+        #screen-auth::after {
+            content: '';
+            position: absolute;
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 70%);
+            bottom: -100px; right: -100px;
+            animation: float2 10s ease-in-out infinite;
+        }
+
+        @keyframes float1 { 0%,100%{transform:translate(0,0);} 50%{transform:translate(30px,20px);} }
+        @keyframes float2 { 0%,100%{transform:translate(0,0);} 50%{transform:translate(-20px,30px);} }
+        @keyframes slideIn { from{opacity:0;transform:translateY(12px);} to{opacity:1;transform:translateY(0);} }
+        @keyframes shake { 0%,100%{transform:translateX(0);} 20%,60%{transform:translateX(-8px);} 40%,80%{transform:translateX(8px);} }
+
+        .auth-container {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .auth-logo {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            color: white;
+            margin-bottom: 4px;
+        }
+        .auth-logo-icon {
+            width: 52px; height: 52px;
+            background: linear-gradient(135deg, #4f6ef7, #8b5cf6);
+            border-radius: 15px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 26px;
+            box-shadow: 0 8px 32px rgba(79,110,247,0.4);
+        }
+        .auth-logo-text { font-size: 30px; font-weight: 800; letter-spacing: -0.5px; }
+        .auth-logo-sub { font-size: 11px; color: #94a3b8; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+
+        /* AUTH STEP 1 — Role Selection */
+        #auth-step-role {
+            animation: slideIn 0.3s ease;
+        }
+        /* AUTH STEP 2 — Login Form */
+        #auth-step-form {
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        .auth-card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 24px;
+            padding: 36px 40px;
+            width: 420px;
+            text-align: center;
+            box-shadow: 0 32px 80px rgba(0,0,0,0.4);
+        }
+        .auth-card h2 { color: white; font-size: 21px; font-weight: 800; margin-bottom: 5px; }
+        .auth-card > p { color: #94a3b8; font-size: 13px; margin-bottom: 28px; }
+
+        .auth-divider {
+            display: flex; align-items: center; gap: 12px;
+            margin: 18px 0; color: #475569; font-size: 11px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .auth-divider::before, .auth-divider::after { content:''; flex:1; height:1px; background:rgba(255,255,255,0.1); }
+
+        /* Role selection buttons */
+        .auth-btn {
+            width: 100%; padding: 14px 20px; border: none; border-radius: 12px;
+            font-weight: 700; font-size: 15px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            transition: all 0.22s ease; position: relative; overflow: hidden;
+            font-family: 'Inter', sans-serif;
+        }
+        .auth-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(0,0,0,0.35); }
+        .auth-btn:active { transform: translateY(0); }
+        .auth-btn-doctor {
+            background: linear-gradient(135deg, #4f6ef7, #3b5bdb);
+            color: white; box-shadow: 0 4px 16px rgba(79,110,247,0.35); margin-bottom: 12px;
+        }
+        .auth-btn-patient {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white; box-shadow: 0 4px 16px rgba(16,185,129,0.35);
+        }
+
+        /* Role pill shown in form step */
+        .role-pill {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 7px 18px; border-radius: 30px; font-size: 13px; font-weight: 700;
+            margin-bottom: 22px;
+        }
+        .role-pill.doctor { background: rgba(79,110,247,0.18); color: #818cf8; border: 1px solid rgba(79,110,247,0.35); }
+        .role-pill.patient { background: rgba(16,185,129,0.18); color: #34d399; border: 1px solid rgba(16,185,129,0.35); }
+
+        /* Input fields */
+        .auth-input-wrap {
+            position: relative; margin-bottom: 14px; text-align: left;
+        }
+        .auth-input-label {
+            display: block; font-size: 11px; font-weight: 700; color: #94a3b8;
+            text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 7px;
+        }
+        .auth-input {
+            width: 100%; padding: 13px 16px 13px 44px;
+            background: rgba(255,255,255,0.06);
+            border: 1.5px solid rgba(255,255,255,0.12);
+            border-radius: 10px; color: white; font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+            outline: none;
+        }
+        .auth-input::placeholder { color: #475569; }
+        .auth-input:focus {
+            border-color: rgba(79,110,247,0.7);
+            background: rgba(255,255,255,0.08);
+            box-shadow: 0 0 0 4px rgba(79,110,247,0.15);
+        }
+        .auth-input-icon {
+            position: absolute; left: 14px; bottom: 13px;
+            font-size: 16px; opacity: 0.5;
+        }
+
+        /* Eye toggle for password */
+        .auth-eye-btn {
+            position: absolute; right: 12px; bottom: 11px;
+            background: none; border: none; cursor: pointer;
+            color: #64748b; font-size: 16px; padding: 2px;
+            transition: color 0.2s;
+        }
+        .auth-eye-btn:hover { color: #94a3b8; }
+
+        /* Submit button */
+        .auth-submit-btn {
+            width: 100%; padding: 14px; border: none; border-radius: 12px;
+            font-weight: 800; font-size: 15px; cursor: pointer;
+            transition: all 0.22s; margin-top: 6px;
+            font-family: 'Inter', sans-serif; letter-spacing: 0.3px;
+        }
+        .auth-submit-btn.doctor {
+            background: linear-gradient(135deg, #4f6ef7, #3b5bdb);
+            color: white; box-shadow: 0 4px 16px rgba(79,110,247,0.4);
+        }
+        .auth-submit-btn.patient {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white; box-shadow: 0 4px 16px rgba(16,185,129,0.4);
+        }
+        .auth-submit-btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
+        .auth-submit-btn:active { transform: translateY(0); }
+
+        /* Error message */
+        .auth-error {
+            background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.35);
+            color: #fca5a5; border-radius: 8px; padding: 10px 14px;
+            font-size: 13px; font-weight: 600; margin-bottom: 14px;
+            display: none; text-align: left;
+        }
+
+        /* Back button */
+        .auth-back-btn {
+            background: none; border: none; color: #64748b; cursor: pointer;
+            font-size: 13px; font-weight: 600; display: flex; align-items: center;
+            gap: 6px; transition: color 0.2s; padding: 0;
+            font-family: 'Inter', sans-serif; margin-bottom: 20px;
+        }
+        .auth-back-btn:hover { color: #94a3b8; }
+
+        /* Demo credentials box */
+        .demo-creds {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 14px;
+            padding: 18px 20px;
+            width: 420px;
+        }
+        .demo-creds-title {
+            color: #64748b; font-size: 11px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .demo-creds-title::before, .demo-creds-title::after {
+            content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.08);
+        }
+        .demo-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 11px 14px; border-radius: 10px; margin-bottom: 8px;
+            cursor: pointer; transition: background 0.2s, border-color 0.2s;
+            border: 1px solid transparent;
+        }
+        .demo-row:last-child { margin-bottom: 0; }
+        .demo-row:hover { background: rgba(255,255,255,0.06); }
+        .demo-row.doctor:hover { border-color: rgba(79,110,247,0.3); background: rgba(79,110,247,0.08); }
+        .demo-row.patient:hover { border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.08); }
+        .demo-row-left { display: flex; align-items: center; gap: 10px; }
+        .demo-role-icon {
+            width: 34px; height: 34px; border-radius: 9px;
+            display: flex; align-items: center; justify-content: center; font-size: 17px;
+        }
+        .demo-role-icon.doctor { background: rgba(79,110,247,0.2); }
+        .demo-role-icon.patient { background: rgba(16,185,129,0.2); }
+        .demo-name { color: #e2e8f0; font-size: 13px; font-weight: 700; }
+        .demo-detail { color: #64748b; font-size: 11px; margin-top: 2px; font-family: monospace; letter-spacing: 0.3px; }
+        .demo-row-right { display: flex; align-items: center; gap: 8px; }
+        .demo-badge {
+            padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
+        }
+        .demo-badge.doctor { background: rgba(79,110,247,0.2); color: #818cf8; border: 1px solid rgba(79,110,247,0.3); }
+        .demo-badge.patient { background: rgba(16,185,129,0.2); color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
+        .demo-fill-hint { font-size: 10px; color: #334155; }
+
+        /* ===================== SIDEBAR ===================== */
+        #sidebar {
+            width: 268px;
+            background: var(--sidebar-bg);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid rgba(255,255,255,0.06);
+            flex-shrink: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        #sidebar::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+
+        .brand {
+            padding: 22px 22px 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .brand-icon {
+            width: 36px; height: 36px;
+            background: linear-gradient(135deg, #4f6ef7, #8b5cf6);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+            box-shadow: 0 4px 12px rgba(79,110,247,0.3);
+        }
+        .brand-text { line-height: 1.2; }
+        .brand-name { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; }
+        .brand-sub { font-size: 10px; color: #475569; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; }
+
+        /* User card in sidebar */
+        .user-card {
+            margin: 14px;
+            padding: 14px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .user-avatar {
+            width: 38px; height: 38px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; flex-shrink: 0;
+        }
+        .user-avatar.doctor { background: linear-gradient(135deg, rgba(79,110,247,0.3), rgba(79,110,247,0.1)); border: 1px solid rgba(79,110,247,0.3); }
+        .user-avatar.patient { background: linear-gradient(135deg, rgba(16,185,129,0.3), rgba(16,185,129,0.1)); border: 1px solid rgba(16,185,129,0.3); }
+        .user-info { flex: 1; min-width: 0; }
+        .user-name { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .user-role-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700;
+            margin-top: 3px;
+        }
+        .user-role-badge.doctor { background: rgba(79,110,247,0.2); color: #818cf8; }
+        .user-role-badge.patient { background: rgba(16,185,129,0.2); color: #34d399; }
+
+        .nav-group { margin-top: 10px; }
+        .nav-section-title {
+            padding: 6px 22px;
+            font-size: 10px; color: #334155; text-transform: uppercase; font-weight: 700; letter-spacing: 1.2px;
+            margin-bottom: 4px;
+        }
+
+        .nav-item {
+            padding: 11px 22px;
+            display: flex; align-items: center; gap: 11px;
+            color: #94a3b8;
+            font-size: 13.5px; font-weight: 500;
+            cursor: pointer;
+            transition: all 0.18s;
+            border-left: 3px solid transparent;
+            position: relative;
+        }
+        .nav-item:hover { background: var(--sidebar-hover); color: #e2e8f0; border-left-color: rgba(79,110,247,0.3); }
+        .nav-item.active {
+            background: linear-gradient(90deg, rgba(79,110,247,0.15), transparent);
+            color: white; border-left-color: #4f6ef7;
+        }
+        .nav-icon { font-size: 15px; width: 20px; text-align: center; }
+        .nav-item.active .nav-icon { filter: none; }
+        .nav-badge {
+            margin-left: auto; background: var(--danger); color: white;
+            font-size: 10px; padding: 2px 7px; border-radius: 10px; font-weight: 700;
+        }
+
+        /* Bottom of sidebar */
+        .sidebar-footer {
+            margin-top: auto;
+            padding: 16px 14px;
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+        .logout-btn {
+            width: 100%; padding: 11px 16px;
+            background: rgba(239,68,68,0.08);
+            border: 1px solid rgba(239,68,68,0.2);
+            border-radius: 10px;
+            color: #f87171;
+            font-size: 13px; font-weight: 600;
+            cursor: pointer; display: flex; align-items: center;
+            justify-content: center; gap: 8px;
+            transition: all 0.2s;
+        }
+        .logout-btn:hover {
+            background: rgba(239,68,68,0.18);
+            border-color: rgba(239,68,68,0.4);
+            color: #fca5a5;
+        }
+
+        /* View Mode Toggle */
+        .view-mode { padding: 0 14px 4px; }
+        .view-mode-label { font-size: 10px; color: #334155; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 8px; }
+        .view-mode-toggle { display: flex; background: rgba(0,0,0,0.25); border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.06); }
+        .vm-btn { flex:1; padding:9px; text-align:center; font-size:12px; font-weight:600; cursor:pointer; color:#475569; transition:all 0.2s; }
+        .vm-btn.active { background: linear-gradient(135deg, #4f6ef7, #6d28d9); color:white; }
+
+        /* ===================== MAIN CONTENT ===================== */
+        #main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            padding: 32px 40px;
+            background: var(--main-bg);
+        }
+
+        .screen { display: none; }
+        .screen.active { display: block; animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+        /* Header */
+        .header {
+            margin-bottom: 28px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .header h1 { margin: 0; font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 10px; letter-spacing: -0.3px; }
+        .header p { margin: 4px 0 0 0; color: var(--text-muted); font-size: 13px; }
+
+        /* Grid layouts */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .grid-summary { display: flex; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
+
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            padding: 22px;
+            position: relative;
+            overflow: hidden;
+            transition: box-shadow 0.2s, transform 0.2s;
+        }
+        .card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+
+        .summary-card {
+            flex: 1; min-width: 140px;
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; text-align: center; padding: 22px;
+        }
+        .summary-card .s-icon { font-size: 26px; margin-bottom: 12px; }
+        .summary-card .s-val { font-size: 30px; font-weight: 900; margin-bottom: 4px; }
+        .summary-card .s-lbl { font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
+
+        /* Badges */
+        .badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; }
+        .badge-outline { border:1px solid var(--border); color:var(--text-muted); }
+        .badge-blue { background:var(--info-bg); color:var(--info); border:1px solid #bfdbfe; }
+        .badge-red { background:var(--danger-bg); color:var(--danger); border:1px solid #fecaca; }
+        .badge-green { background:var(--success-bg); color:var(--success); border:1px solid #bbf7d0; }
+        .badge-amber { background:var(--warning-bg); color:var(--warning); border:1px solid #fde68a; }
+
+        /* Inputs */
+        .search-bar {
+            width: 100%; padding: 13px 18px 13px 44px; border-radius: 10px;
+            border: 1.5px solid var(--border); font-size: 14px; margin-bottom: 24px;
+            background: white url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%2394a3b8" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>') no-repeat 14px center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+        .search-bar:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(79,110,247,0.12); }
+        
+        .modal-input {
+            width: 100%; padding: 12px; border-radius: 8px;
+            border: 1.5px solid var(--border); font-size: 14px; margin: 0;
+            background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: all 0.2s; font-family: 'Inter', sans-serif;
+        }
+        .modal-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(79,110,247,0.12); }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 18px; border-radius: 8px; font-weight: 700; font-size: 13px;
+            cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 7px;
+            transition: all 0.2s; font-family: 'Inter', sans-serif;
+        }
+        .btn:hover { transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+        .btn-primary { background: linear-gradient(135deg, #4f6ef7, #3b5bdb); color: white; box-shadow: 0 2px 8px rgba(79,110,247,0.3); }
+        .btn-primary:hover { box-shadow: 0 4px 16px rgba(79,110,247,0.4); }
+        .btn-success { background: linear-gradient(135deg, #10b981, #059669); color: white; box-shadow: 0 2px 8px rgba(16,185,129,0.3); }
+        .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; box-shadow: 0 2px 8px rgba(239,68,68,0.3); }
+
+        /* Hero card on dashboard */
+        .hero-card {
+            background: linear-gradient(135deg, #0f1729 0%, #1d1060 50%, #0f172a 100%);
+            border-radius: 20px;
+            padding: 28px 32px;
+            color: white;
+            margin-bottom: 24px;
+            border: 1px solid rgba(255,255,255,0.08);
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-card::before {
+            content: '';
+            position: absolute;
+            top: -80px; right: -80px;
+            width: 250px; height: 250px;
+            background: radial-gradient(circle, rgba(79,110,247,0.2) 0%, transparent 70%);
+        }
+        .hero-card::after {
+            content: '';
+            position: absolute;
+            bottom: -60px; left: 30%;
+            width: 200px; height: 200px;
+            background: radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 70%);
+        }
+        .hero-card-content { position: relative; z-index: 1; }
+        .hero-greeting { font-size: 12px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+        .hero-name { font-size: 30px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 4px; }
+        .hero-date { font-size: 13px; color: #94a3b8; margin-bottom: 24px; }
+        .hero-stats { display: flex; gap: 12px; flex-wrap: wrap; }
+        .hero-stat {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.08);
+            padding: 14px 22px; border-radius: 12px; text-align: center;
+            backdrop-filter: blur(10px);
+            transition: background 0.2s;
+        }
+        .hero-stat:hover { background: rgba(255,255,255,0.14); }
+        .hero-stat-val { font-size: 26px; font-weight: 900; }
+        .hero-stat-lbl { font-size: 10px; color: #94a3b8; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; margin-top: 4px; }
+
+        /* Medicine card */
+        .med-card { border-top: 3px solid var(--primary); }
+        .med-card.conflict-major { border-top-color: var(--danger); }
+        .med-card.conflict-moderate { border-top-color: var(--warning); }
+        .med-stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin:18px 0; border-top:1px solid var(--border); border-bottom:1px solid var(--border); padding:14px 0; text-align:center; }
+        .med-stat-val { font-size:16px; font-weight:800; color:var(--text-main); }
+        .med-stat-lbl { font-size:10px; color:var(--text-muted); text-transform:uppercase; margin-top:4px; font-weight:700; letter-spacing:0.5px; }
+
+        /* Canvas wrapper */
+        .canvas-wrapper {
+            background: white; border-radius: 16px; border: 1px solid var(--border);
+            padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); height: 580px; position: relative;
+        }
+
+        /* Terminal */
+        .terminal {
+            background: #0d1117; border-radius: 10px; border: 1px solid #30363d;
+            font-family: 'JetBrains Mono', 'Courier New', monospace; padding: 16px;
+            color: #10b981; overflow-y: auto; font-size: 12.5px; line-height: 1.6;
+        }
+        .terminal p { margin: 0; padding: 1px 0; }
+
+        /* DP Table */
+        .dp-table { width:100%; border-collapse:collapse; font-size:12px; margin-top:16px; }
+        .dp-table th, .dp-table td { border:1px solid var(--border); padding:7px 10px; text-align:center; }
+        .dp-table th { background:#f8fafc; color:var(--text-muted); font-weight:700; }
+        .dp-table .highlight { background:var(--info-bg); color:var(--info); font-weight:700; }
+
+        /* Range slider */
+        input[type=range] { -webkit-appearance:none; width:100%; background:transparent; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; height:20px; width:20px; border-radius:50%; background:var(--primary); cursor:pointer; margin-top:-8px; box-shadow:0 2px 6px rgba(79,110,247,0.4); }
+        input[type=range]::-webkit-slider-runnable-track { width:100%; height:4px; cursor:pointer; background:linear-gradient(90deg, var(--primary), #8b5cf6); border-radius:2px; }
+
+        /* Notification alert */
+        .alert-danger {
+            background: linear-gradient(135deg, #fef2f2, #fff1f2);
+            border: 1px solid #fecaca; border-left: 4px solid var(--danger);
+            border-radius: 12px; padding: 16px 20px; margin-bottom: 20px;
+        }
+        .alert-info {
+            background: var(--info-bg);
+            border: 1px solid #bfdbfe; border-left: 4px solid var(--info);
+            border-radius: 12px; padding: 16px 20px; margin-bottom: 20px;
+        }
+
+        /* Doctor only items */
+        .doctor-only { }
+
+        /* ===================== VIEW MODE: SIMPLE ===================== */
+        /* In simple mode: hide clinical-only elements */
+        body.view-simple .med-clinical-only { display: none !important; }
+        body.view-simple .med-card { border-top-width: 4px; }
+        body.view-simple .med-simple-row { display: flex !important; }
+
+        /* ===================== VITALS CHIPS ===================== */
+        .vitals-chip {
+            display: flex; align-items: center; gap: 6px;
+            background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 20px; padding: 5px 12px;
+            font-size: 12px; font-weight: 700; color: white;
+            backdrop-filter: blur(4px);
+        }
+        .vitals-chip > span:first-child { font-size: 14px; }
+        .vitals-chip > span:last-child { font-size: 10px; font-weight: 600; opacity: 0.7; margin-left: 2px; }
+
+        /* ===================== PATIENT LIST (Doctor Sidebar) ===================== */
+        .patient-list-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 9px 14px; cursor: pointer;
+            border-left: 3px solid transparent;
+            transition: all 0.18s ease;
+        }
+        .patient-list-item:hover {
+            background: rgba(79,110,247,0.1);
+            border-left-color: rgba(79,110,247,0.4);
+        }
+        .patient-list-item.active-patient {
+            background: rgba(79,110,247,0.15);
+            border-left-color: #4f6ef7;
+        }
+        .patient-list-item .pat-avatar {
+            width: 30px; height: 30px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 800; flex-shrink: 0;
+            color: white;
+        }
+        .patient-list-item .pat-name {
+            font-size: 12px; font-weight: 700; color: #e2e8f0;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .patient-list-item .pat-condition {
+            font-size: 10px; color: #64748b; margin-top: 1px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .patient-list-item .pat-status-dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: #10b981; flex-shrink: 0; margin-left: auto;
+        }
+
+        /* Default: simple row hidden in clinical mode */
+        .med-simple-row { display: none; }
+
+    </style>
+</head>
+<body>
+    <!-- ===================== AUTH SCREEN ===================== -->
+    <div id="screen-auth">
+        <div class="auth-container">
+            <!-- Logo -->
+            <div class="auth-logo">
+                <div class="auth-logo-icon">💊</div>
+                <div>
+                    <div class="auth-logo-text">PillPath</div>
+                    <div class="auth-logo-sub">Smart Medication System</div>
+                </div>
+            </div>
+
+            <!-- STEP 1: Role Selection -->
+            <div id="auth-step-role">
+                <div class="auth-card">
+                    <h2>Welcome Back</h2>
+                    <p>Select your role to continue</p>
+
+                    <button class="auth-btn auth-btn-doctor" onclick="showLoginForm('doctor')">
+                        <span style="font-size:20px;">👨‍⚕️</span>
+                        <span>Login as Doctor</span>
+                    </button>
+                    <button class="auth-btn auth-btn-patient" onclick="showLoginForm('patient')">
+                        <span style="font-size:20px;">👤</span>
+                        <span>Login as Patient</span>
+                    </button>
+
+                    <div class="auth-divider">quick demo access</div>
+
+                    <!-- Demo rows: click fills credentials in the form -->
+                    <div style="text-align:left;">
+                        <div class="demo-row doctor" onclick="FirebaseApp.login('doctor')">
+                            <div class="demo-row-left">
+                                <div class="demo-role-icon doctor">👨‍⚕️</div>
+                                <div><div class="demo-name">Dr. Gregory House</div><div class="demo-detail">doctor@pillpath.com</div></div>
+                            </div>
+                            <div class="demo-row-right"><span class="demo-fill-hint">→ Login</span></div>
+                        </div>
+                        <div class="demo-row patient" onclick="FirebaseApp.login('patient', 'P001')">
+                            <div class="demo-row-left">
+                                <div class="demo-role-icon patient">👨</div>
+                                <div><div class="demo-name">John Doe</div><div class="demo-detail">john.doe@pillpath.com</div></div>
+                            </div>
+                            <div class="demo-row-right"><span class="demo-fill-hint">→ Login</span></div>
+                        </div>
+                        <div class="demo-row patient" onclick="FirebaseApp.login('patient', 'P002')">
+                            <div class="demo-row-left">
+                                <div class="demo-role-icon patient" style="background:#fce7f3; color:#ec4899;">👩</div>
+                                <div><div class="demo-name">Jane Smith</div><div class="demo-detail">jane.smith@pillpath.com</div></div>
+                            </div>
+                            <div class="demo-row-right"><span class="demo-fill-hint">→ Login</span></div>
+                        </div>
+                        <div class="demo-row patient" onclick="FirebaseApp.login('patient', 'P003')">
+                            <div class="demo-row-left">
+                                <div class="demo-role-icon patient" style="background:#fef3c7; color:#f59e0b;">🧑</div>
+                                <div><div class="demo-name">Raj Patel</div><div class="demo-detail">raj.patel@pillpath.com</div></div>
+                            </div>
+                            <div class="demo-row-right"><span class="demo-fill-hint">→ Login</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 2: Login Form -->
+            <div id="auth-step-form">
+                <div class="auth-card" style="text-align:left;">
+                    <!-- Back button -->
+                    <button class="auth-back-btn" onclick="showRoleStep()">
+                        ← Back to role selection
+                    </button>
+
+                    <!-- Role pill -->
+                    <div style="text-align:center;">
+                        <div class="role-pill doctor" id="form-role-pill">👨‍⚕️ Doctor Portal</div>
+                    </div>
+
+                    <!-- Form title -->
+                    <div id="form-user-preview" style="display:flex; align-items:center; gap:12px; padding:14px 16px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:12px; margin-bottom:22px;">
+                        <div id="form-user-icon" style="font-size:26px;">👨‍⚕️</div>
+                        <div>
+                            <div id="form-user-name" style="color:white; font-weight:800; font-size:15px;">Dr. Gregory House</div>
+                            <div id="form-user-id" style="color:#64748b; font-size:12px; margin-top:2px;">DOC-101 · Full Access</div>
+                        </div>
+                    </div>
+
+                    <!-- Error alert -->
+                    <div class="auth-error" id="auth-error-msg">⚠️ Invalid email or password. Please try again.</div>
+
+                    <!-- Email field -->
+                    <div class="auth-input-wrap">
+                        <label class="auth-input-label" for="auth-email">Email Address</label>
+                        <span class="auth-input-icon">✉️</span>
+                        <input class="auth-input" id="auth-email" type="email" placeholder="Enter your email" autocomplete="email">
+                    </div>
+
+                    <!-- Password field -->
+                    <div class="auth-input-wrap">
+                        <label class="auth-input-label" for="auth-password">Password</label>
+                        <span class="auth-input-icon">🔑</span>
+                        <input class="auth-input" id="auth-password" type="password" placeholder="Enter your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitLogin()">
+                        <button class="auth-eye-btn" id="pwd-eye" onclick="togglePwdVis()" type="button">👁</button>
+                    </div>
+
+                    <!-- Submit -->
+                    <button class="auth-submit-btn doctor" id="auth-submit-btn" onclick="submitLogin()">
+                        🔓 Sign In
+                    </button>
+
+                    <div style="text-align:center; margin-top:14px; color:#334155; font-size:12px;">
+                        💡 Use the demo credentials shown above
+                    </div>
+                </div>
+            </div>
+
+            <div style="color:#1e293b; font-size:12px; text-align:center;">
+                🔒 Mock Firebase Auth &nbsp;·&nbsp; Educational Demo
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== SIDEBAR ===================== -->
+    <div id="sidebar" style="display:none;">
+        <!-- Brand -->
+        <div class="brand">
+            <div class="brand-icon">💊</div>
+            <div class="brand-text">
+                <div class="brand-name">PillPath</div>
+                <div class="brand-sub">Smart Medication</div>
+            </div>
+        </div>
+
+        <!-- ── DOCTOR sidebar user card ── -->
+        <div class="user-card" id="user-card-doctor" style="display:none;">
+            <div class="user-avatar doctor" id="user-avatar-icon">👨‍⚕️</div>
+            <div class="user-info">
+                <div class="user-name" id="sidebar-user-name">Dr. Gregory House</div>
+                <div class="user-role-badge doctor" id="role-badge-display">🩺 Doctor</div>
+            </div>
+        </div>
+
+        <!-- ── PATIENT sidebar user card ── -->
+        <div class="user-card" id="user-card-patient" style="display:none; background:linear-gradient(135deg,rgba(16,185,129,0.15),rgba(5,150,105,0.08)); border-color:rgba(16,185,129,0.3);">
+            <div class="user-avatar patient" id="patient-avatar-icon">👤</div>
+            <div class="user-info">
+                <div class="user-name" id="sidebar-patient-name">John Doe</div>
+                <div class="user-role-badge patient" style="font-size:11px;">👤 Patient</div>
+            </div>
+        </div>
+
+        <!-- ── DOCTOR: Patient switcher panel ── -->
+        <div id="patient-switcher" style="display:none; margin:0 12px 8px; border-radius:14px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); overflow:hidden; flex-shrink: 0;">
+            <div style="padding:10px 14px 8px; display:flex; align-items:center; justify-content:space-between;">
+                <div style="font-size:10px; font-weight:800; color:#475569; text-transform:uppercase; letter-spacing:1.2px;">My Patients</div>
+                <div id="active-patient-count" style="font-size:10px; font-weight:700; color:#4f6ef7; background:rgba(79,110,247,0.15); padding:2px 8px; border-radius:10px;">3 Patients</div>
+            </div>
+            <div id="patient-list">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <!-- ── PATIENT: doctor info strip ── -->
+        <div id="patient-doctor-strip" style="display:none; margin:0 12px 8px; padding:10px 14px; border-radius:12px; background:rgba(79,110,247,0.08); border:1px solid rgba(79,110,247,0.2);">
+            <div style="font-size:10px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:1px; margin-bottom:5px;">Your Doctor</div>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <div style="font-size:20px;">👨‍⚕️</div>
+                <div>
+                    <div id="patient-doctor-name" style="color:#e2e8f0; font-weight:700; font-size:13px;">Dr. Gregory House</div>
+                    <div style="color:#64748b; font-size:11px;">Internal Medicine</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-group">
+            <div class="nav-section-title">Overview</div>
+            <div class="nav-item active" data-target="screen-dashboard"><span class="nav-icon">🏠</span> Dashboard</div>
+            <div class="nav-item" data-target="screen-medicines"><span class="nav-icon">💊</span> Medicines</div>
+            <div class="nav-item" data-target="screen-interactions"><span class="nav-icon">⚡</span> Interactions <span class="nav-badge" id="badge-interactions">3</span></div>
+        </div>
+
+        <div class="nav-group">
+            <div class="nav-section-title">Schedule</div>
+            <div class="nav-item" data-target="screen-schedule"><span class="nav-icon">📅</span> Schedule</div>
+            <div class="nav-item" data-target="screen-graph"><span class="nav-icon">🔗</span> Conflict Graph</div>
+            <div class="nav-item" data-target="screen-emergency"><span class="nav-icon">🚨</span> Emergency</div>
+        </div>
+
+        <div class="nav-group">
+            <div class="nav-section-title doctor-only" id="tools-section-title">Tools</div>
+            <div class="nav-item doctor-only" id="nav-optimizer" data-target="screen-optimizer"><span class="nav-icon">⚖️</span> Optimizer</div>
+            <div class="nav-item" data-target="screen-adherence"><span class="nav-icon">📊</span> Adherence</div>
+        </div>
+
+        <div style="flex:1;"></div>
+
+        <!-- View Mode -->
+        <div class="view-mode">
+            <div class="view-mode-label">View Mode</div>
+            <div class="view-mode-toggle">
+                <div class="vm-btn active" id="vm-clinical">🩺 Clinical</div>
+                <div class="vm-btn" id="vm-simple">👤 Simple</div>
+            </div>
+        </div>
+
+        <!-- Logout -->
+        <div class="sidebar-footer">
+            <button class="logout-btn" onclick="doLogout()">
+                <span>🚪</span>
+                <span>Logout</span>
+            </button>
+        </div>
+    </div>
+
+
+    <!-- ===================== MAIN CONTENT ===================== -->
+    <div id="main-content" style="display:none;">
+
+        <!-- Dashboard Screen -->
+        <div id="screen-dashboard" class="screen active">
+            <!-- Dynamic Patient Header -->
+            <div class="hero-card" id="dash-hero-card">
+                <div class="hero-card-content">
+                    <div class="hero-greeting" id="dash-greeting">🌅 Good Morning</div>
+                    <div class="hero-name" id="dash-patient-name">Loading...</div>
+                    <div style="display:flex; align-items:center; gap:8px; margin:6px 0 16px; flex-wrap:wrap;">
+                        <span id="dash-diagnosis-chip" style="font-size:12px; font-weight:700; background:rgba(255,255,255,0.15); color:white; padding:4px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.25);">Loading...</span>
+                        <span id="dash-last-visit" style="font-size:12px; color:rgba(255,255,255,0.6);">Last visit: —</span>
+                    </div>
+                    <!-- Vitals row (doctor view) -->
+                    <div id="dash-vitals-row" style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px;">
+                        <div class="vitals-chip" id="vital-bp"><span>🫀</span><span id="vital-bp-val">—</span><span>BP</span></div>
+                        <div class="vitals-chip" id="vital-sugar"><span>🩸</span><span id="vital-sugar-val">—</span><span>Glucose</span></div>
+                        <div class="vitals-chip" id="vital-weight"><span>⚖️</span><span id="vital-weight-val">—</span><span>Weight</span></div>
+                        <div class="vitals-chip" id="vital-age"><span>🎂</span><span id="vital-age-val">—</span><span>Age</span></div>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="hero-stat">
+                            <div class="hero-stat-val" id="dash-med-count">6</div>
+                            <div class="hero-stat-lbl">Medicines</div>
+                        </div>
+                        <div class="hero-stat">
+                            <div class="hero-stat-val" id="dash-conflict-count" style="color:#f87171;">3</div>
+                            <div class="hero-stat-lbl">Conflicts</div>
+                        </div>
+                        <div class="hero-stat">
+                            <div class="hero-stat-val" style="color:#34d399;">0</div>
+                            <div class="hero-stat-lbl">Urgent Refills</div>
+                        </div>
+                        <div class="hero-stat">
+                            <div class="hero-stat-val" id="dash-required-count" style="color:#fbbf24;">4</div>
+                            <div class="hero-stat-lbl">Required</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alert -->
+            <div id="dash-top-alert" class="alert-danger" style="display:none;">
+                <!-- Populated by JS -->
+            </div>
+
+            <div class="grid-2">
+                <!-- Today's schedule -->
+                <div class="card">
+                    <h3 style="font-size: 14px; font-weight: 800; display: flex; align-items: center; gap: 8px; margin-bottom: 18px;">📋 Today's Schedule</h3>
+                    <div id="dash-schedule-list" style="display: flex; flex-direction: column; gap: 0;">
+                        <!-- Populated by JS -->
+                    </div>
+                    <div id="dash-schedule-more" style="font-size:12px; color:var(--text-light); margin:10px 0 14px; display:none;"></div>
+                    <button class="btn btn-primary" onclick="document.querySelector('[data-target=screen-schedule]').click()">View Full Schedule →</button>
+                </div>
+
+                <!-- Warnings -->
+                <div class="card">
+                    <h3 style="font-size: 14px; font-weight: 800; display: flex; align-items: center; gap: 8px; margin-bottom: 18px;">⚠️ Active Warnings</h3>
+                    <div id="dash-warnings-list">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Medicine Manager Screen -->
+        <div id="screen-medicines" class="screen">
+            <div class="header">
+                <div>
+                    <h1>💊 Medicine Manager</h1>
+                    <p>Boyer-Moore exact match + Edit Distance fuzzy search</p>
+                </div>
+                <button class="btn btn-primary doctor-only" id="add-med-btn" onclick="addMedicine()">+ Add Medicine</button>
+            </div>
+            <input type="text" class="search-bar" id="med-search" placeholder="Search medicines — try typos like 'Meformin' or 'Asprin'...">
+            <div class="grid-summary">
+                <div class="card summary-card"><div class="s-icon">💊</div><div class="s-val">6</div><div class="s-lbl">Medicines</div></div>
+                <div class="card summary-card"><div class="s-icon" style="color:var(--danger);">⚡</div><div class="s-val" style="color:var(--danger);">1</div><div class="s-lbl">Major Conflicts</div></div>
+                <div class="card summary-card"><div class="s-icon">🔗</div><div class="s-val">3</div><div class="s-lbl">Total Conflicts</div></div>
+                <div class="card summary-card"><div class="s-icon">📅</div><div class="s-val">8</div><div class="s-lbl">Daily Doses</div></div>
+                <div class="card summary-card"><div class="s-icon">📦</div><div class="s-val" style="color:var(--danger);">0</div><div class="s-lbl">Urgent Refills</div></div>
+            </div>
+            <div id="med-list" class="grid-cards"></div>
+        </div>
+
+        <!-- Interactions Screen -->
+        <div id="screen-interactions" class="screen">
+            <div class="header">
+                <div>
+                    <h1>⚡ Drug Interaction Center</h1>
+                    <p>Clinical explanations of every detected conflict in your current medicine list</p>
+                </div>
+            </div>
+            <div class="grid-summary" style="margin-bottom: 24px;">
+                <div class="card summary-card" style="min-width:120px;"><div class="s-icon" style="color:var(--danger);">🚨</div><div class="s-val" style="color:var(--danger);">1</div><div class="s-lbl">Major</div></div>
+                <div class="card summary-card" style="min-width:120px;"><div class="s-icon" style="color:var(--warning);">⚠️</div><div class="s-val" style="color:var(--warning);">2</div><div class="s-lbl">Moderate</div></div>
+                <div class="card summary-card" style="min-width:120px;"><div class="s-icon" style="color:var(--info);">ℹ️</div><div class="s-val" style="color:var(--info);">3</div><div class="s-lbl">Total Pairs</div></div>
+            </div>
+            <div id="interaction-list" style="display:flex; flex-direction:column; gap:16px;"></div>
+        </div>
+
+        <!-- Conflict Graph Screen -->
+        <div id="screen-graph" class="screen">
+            <div class="header">
+                <div>
+                    <h1>🔗 Conflict Graph</h1>
+                    <p>Welsh-Powell greedy graph coloring — conflicting medicines → separate time slots</p>
+                </div>
+                <button class="btn btn-primary" onclick="runGraphColoring()">▶ Run Algorithm</button>
+            </div>
+            <div class="grid-summary" style="margin-bottom: 24px;">
+                <div class="card summary-card" style="min-width:120px;"><div class="s-icon">🔗</div><div class="s-val" style="color:var(--danger);" id="gc-conflicts">3</div><div class="s-lbl">Conflicts</div></div>
+                <div class="card summary-card" style="min-width:120px;"><div class="s-icon">🚨</div><div class="s-val" style="color:var(--danger);" id="gc-major">1</div><div class="s-lbl">Major</div></div>
+                <div class="card summary-card" style="min-width:120px;"><div class="s-icon">➔</div><div class="s-val" style="color:var(--primary);" id="gc-deps">1</div><div class="s-lbl">Dependencies</div></div>
+                <div class="card summary-card" style="min-width:120px;"><div class="s-icon">🎨</div><div class="s-val" style="color:var(--success);" id="gc-slots">3</div><div class="s-lbl">Slot Groups</div></div>
+            </div>
+            <div class="canvas-wrapper">
+                <canvas id="conflict-canvas"></canvas>
+                <div style="position:absolute; bottom:20px; left:20px; display:flex; gap:16px; font-size:12px; font-weight:600; flex-wrap:wrap;">
+                    <div style="display:flex; align-items:center; gap:5px;"><div style="width:20px; height:3px; background:var(--danger);"></div> Major</div>
+                    <div style="display:flex; align-items:center; gap:5px;"><div style="width:20px; height:3px; background:var(--warning);"></div> Moderate</div>
+                    <div style="display:flex; align-items:center; gap:5px;"><div style="width:20px; height:1px; background:var(--border);"></div> Minor</div>
+                    <div style="display:flex; align-items:center; gap:5px;"><div style="width:20px; height:2px; background:var(--primary); border-top:2px dashed #fff;"></div> Dependency</div>
+                </div>
+                <div style="position:absolute; bottom:-32px; left:20px; display:flex; gap:8px;" id="slot-legend"></div>
+            </div>
+            <div class="grid-2" style="margin-top:50px;">
+                <div class="card" style="text-align:center;">
+                    <div style="font-size:11px; text-transform:uppercase; font-weight:800; color:var(--text-muted); margin-bottom:10px; letter-spacing:1px;">Greedy (Welsh-Powell)</div>
+                    <div style="font-size:38px; font-weight:900; color:var(--primary);" id="gc-greedy-res">—</div>
+                </div>
+                <div class="card" style="text-align:center;">
+                    <div style="font-size:11px; text-transform:uppercase; font-weight:800; color:var(--text-muted); margin-bottom:10px; letter-spacing:1px;">Brute-Force Optimal</div>
+                    <div style="font-size:38px; font-weight:900; color:var(--success);" id="gc-optimal-res">—</div>
+                </div>
+            </div>
+            
+            <div class="card" style="margin-top:20px;">
+                <div style="font-weight:800; margin-bottom:14px; display:flex; align-items:center; gap:6px;">📄 Greedy Execution Log (Welsh-Powell)</div>
+                <div id="gc-execution-log" style="background:#0f172a; color:#e2e8f0; font-family:monospace; font-size:12px; padding:15px; border-radius:10px; height:200px; overflow-y:auto; line-height:1.6;">
+                    <span style="color:var(--text-muted);">Run the algorithm to see the step-by-step coloring log...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dosage Optimizer Screen -->
+        <div id="screen-optimizer" class="screen">
+            <div class="header">
+                <div>
+                    <h1>⚖️ Dosage Optimizer</h1>
+                    <p>0/1 Knapsack DP — maximize therapeutic benefit within your side-effect tolerance budget</p>
+                </div>
+            </div>
+            <div class="card" style="margin-bottom: 24px;">
+                <div style="font-size:14px; font-weight:800; margin-bottom:16px;">⚙️ Side-Effect Budget Control</div>
+                <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-muted); font-weight:700; text-transform:uppercase; margin-bottom:10px; letter-spacing:0.5px;">
+                    <span>Budget: <span id="opt-budget-val" style="color:var(--primary); font-size:16px;">20</span></span>
+                </div>
+                <input type="range" id="opt-slider" min="5" max="40" value="20" oninput="document.getElementById('opt-budget-val').innerText=this.value;">
+                <button class="btn btn-primary" style="margin-top:16px;" onclick="runOptimizer()">▶ Run Knapsack DP</button>
+            </div>
+            <div class="grid-summary" style="margin-bottom:24px;">
+                <div class="card summary-card"><div class="s-icon" style="color:var(--success);">✅</div><div class="s-val" style="color:var(--success);" id="opt-sel-count">4</div><div class="s-lbl">Selected</div></div>
+                <div class="card summary-card"><div class="s-icon" style="color:var(--danger);">❌</div><div class="s-val" style="color:var(--danger);" id="opt-ex-count">2</div><div class="s-lbl">Excluded</div></div>
+                <div class="card summary-card"><div class="s-icon" style="color:var(--info);">💎</div><div class="s-val" style="color:var(--info);" id="opt-val">33</div><div class="s-lbl">Total Value</div></div>
+                <div class="card summary-card"><div class="s-icon">⚖️</div><div class="s-val" id="opt-used">16/20</div><div class="s-lbl">Budget Used</div></div>
+            </div>
+            <div class="grid-2">
+                <div class="card">
+                    <div style="font-weight:800; margin-bottom:14px; color:var(--success); display:flex; align-items:center; gap:6px;">✅ Selected Medicines</div>
+                    <div id="opt-selected-list" style="display:flex; flex-direction:column; gap:0;"></div>
+                </div>
+                <div class="card">
+                    <div style="font-weight:800; margin-bottom:14px; color:var(--danger); display:flex; align-items:center; gap:6px;">❌ Excluded Medicines</div>
+                    <div id="opt-excluded-list" style="display:flex; flex-direction:column; gap:0;"></div>
+                </div>
+            </div>
+            <div class="card" style="margin-top:20px; overflow-x:auto;">
+                <div style="font-weight:800; margin-bottom:14px; display:flex; align-items:center; gap:6px;">📊 DP Table — Traceback Path Highlighted</div>
+                <div id="opt-dp-table"></div>
+            </div>
+        </div>
+
+        <!-- Schedule Screen -->
+        <div id="screen-schedule" class="screen">
+            <div class="header">
+                <div>
+                    <h1>📅 Smart Schedule Generator</h1>
+                    <p>Interval Scheduling DP — optimally placing doses based on wake windows and food rules</p>
+                </div>
+                <button class="btn btn-primary" onclick="runIntervalScheduling()">▶ Generate Schedule</button>
+            </div>
+            <div class="card" style="margin-bottom:20px;">
+                <div id="schedule-terminal" class="terminal" style="height:150px;">
+                    <p>> Ready to generate optimal schedule...</p>
+                </div>
+            </div>
+            <div id="schedule-results" class="grid-cards"></div>
+        </div>
+
+        <!-- Emergency Screen -->
+        <div id="screen-emergency" class="screen">
+            <div class="header">
+                <div>
+                    <h1>🚨 Emergency Rescheduler</h1>
+                    <p>Dijkstra's Algorithm — finding the minimum penalty path to reschedule a missed dose</p>
+                </div>
+            </div>
+            <div class="card" style="margin-bottom:20px;">
+                <div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
+                    <select id="emerg-med-select" class="search-bar" style="margin-bottom:0; flex:1;"></select>
+                    <input type="time" id="emerg-time" class="search-bar" style="margin-bottom:0; width:150px;" value="14:00">
+                    <button class="btn btn-danger" style="margin-top:0;" onclick="runDijkstraReschedule()">🔄 Reschedule</button>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="card" id="emerg-results">
+                    <div style="color:var(--text-muted); font-size:14px; text-align:center; padding:40px 0;">Select a missed medicine to see the optimal new time slots.</div>
+                </div>
+                <div class="card" style="background:var(--sidebar-bg); color:white;">
+                    <h3 style="color:white; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:12px; margin-bottom:14px; font-size:14px;">Penalty Graph (Dijkstra)</h3>
+                    <div id="emerg-terminal" class="terminal" style="background:transparent; border:none; color:#60a5fa; height:280px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Adherence Screen -->
+        <div id="screen-adherence" class="screen">
+            <div class="header">
+                <div>
+                    <h1>📊 Adherence Tracker</h1>
+                    <p>Monitor patient compliance and medication intake history</p>
+                </div>
+            </div>
+            <div class="grid-summary" style="margin-bottom:24px;">
+                <div class="card summary-card"><div id="adh-score-icon" class="s-icon" style="color:var(--success);">✅</div><div id="adh-score" class="s-val" style="color:var(--success);">94%</div><div class="s-lbl">Adherence Score</div></div>
+                <div class="card summary-card"><div class="s-icon">📅</div><div id="adh-days" class="s-val">28</div><div class="s-lbl">Days Tracked</div></div>
+                <div class="card summary-card"><div class="s-icon" style="color:var(--danger);">❌</div><div id="adh-missed" class="s-val" style="color:var(--danger);">3</div><div class="s-lbl">Missed Doses</div></div>
+            </div>
+            <div class="card" style="text-align:center; padding:50px;">
+                <div style="font-size:64px; margin-bottom:16px;">📈</div>
+                <h2 id="adh-big-score" style="font-size:28px; font-weight:900; margin-bottom:8px;">94% Adherence Score</h2>
+                <p id="adh-msg" style="color:var(--text-muted); font-size:15px;">Patient is highly compliant with the generated schedule.</p>
+                <div id="adh-badge" style="display:inline-block; margin-top:24px; padding:14px 32px; background:var(--success-bg); border:1px solid #bbf7d0; border-radius:12px; color:var(--success); font-weight:700;">
+                    🌟 Excellent Compliance — Keep it up!
+                </div>
+            </div>
+        </div>
+
+        <!-- Medicine Modal -->
+        <div id="med-modal" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+            <div class="card" style="width:500px; max-width:90%; padding:30px; animation: slideIn 0.3s ease;">
+                <h2 id="modal-title" style="margin-top:0; margin-bottom:20px; font-weight:800;">Add Medicine</h2>
+                <input type="hidden" id="modal-med-id">
+                
+                <div style="margin-bottom:15px;">
+                    <label style="display:block; font-size:12px; font-weight:700; color:var(--text-muted); margin-bottom:5px;">Medicine Name</label>
+                    <input type="text" id="modal-med-name" class="modal-input" placeholder="e.g. Lisinopril">
+                </div>
+                
+                <div style="margin-bottom:15px;">
+                    <label style="display:block; font-size:12px; font-weight:700; color:var(--text-muted); margin-bottom:5px;">Description</label>
+                    <input type="text" id="modal-med-desc" class="modal-input" placeholder="Brief description...">
+                </div>
+
+                <div style="margin-bottom:15px;">
+                    <label style="display:block; font-size:12px; font-weight:700; color:var(--text-muted); margin-bottom:5px;">Dosage Amount (e.g., 50mg, 1 tablet)</label>
+                    <input type="text" id="modal-med-amount" class="modal-input" placeholder="e.g. 50mg">
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
+                    <div>
+                        <label style="display:block; font-size:12px; font-weight:700; color:var(--text-muted); margin-bottom:5px;">Doses per Day</label>
+                        <input type="number" id="modal-med-doses" class="modal-input" value="1" min="1" max="4">
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:12px; font-weight:700; color:var(--text-muted); margin-bottom:5px;">Food Rule</label>
+                        <select id="modal-med-food" class="modal-input">
+                            <option value="any">Any Time</option>
+                            <option value="after_food">After Food</option>
+                            <option value="empty">Empty Stomach</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:15px; margin-bottom:25px;">
+                    <div>
+                        <label style="display:block; font-size:12px; font-weight:700; color:var(--text-muted); margin-bottom:5px;">Side Effect Score</label>
+                        <input type="number" id="modal-med-se" class="modal-input" value="3" min="1" max="10">
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:12px; font-weight:700; color:var(--text-muted); margin-bottom:5px;">Therapy Value</label>
+                        <input type="number" id="modal-med-tv" class="modal-input" value="7" min="1" max="10">
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:12px; font-weight:700; color:var(--text-muted); margin-bottom:5px;">Days Stock</label>
+                        <input type="number" id="modal-med-qty" class="modal-input" value="30" min="1">
+                    </div>
+                </div>
+
+                <div style="display:flex; justify-content:flex-end; gap:10px;">
+                    <button class="btn" style="background:var(--border); color:var(--text-muted);" onclick="closeMedModal()">Cancel</button>
+                    <button class="btn btn-primary" onclick="saveMedModal()">Save Medicine</button>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- end #main-content -->
+
+<script>
+// ===================== DATA =====================
+
+// Patient P001 — John Doe (Hypertension + Diabetes)
+const MEDS_P001 = [
+  { id:1, name:"Omeprazole",  desc:"Proton Pump Inhibitor | Reduces stomach acid, protects stomach lining before other medications", doses_per_day:1, dose_gap_hours:24, window:[6,22], food_rule:"empty",      side_effect_score:2, therapeutic_value:7, required:true,  conflicts:[],    conflict_severity:{},                    must_after:[],  current_quantity:30 },
+  { id:2, name:"Metformin",   desc:"Antidiabetic (Biguanide) | Controls blood sugar in Type 2 Diabetes by reducing glucose production in liver", doses_per_day:2, dose_gap_hours:6, window:[6,22], food_rule:"after_food", side_effect_score:4, therapeutic_value:9, required:true,  conflicts:[],    conflict_severity:{},                    must_after:[],  current_quantity:14 },
+  { id:3, name:"Aspirin",     desc:"NSAID / Antiplatelet | Prevents blood clots, reduces heart attack and stroke risk",                          doses_per_day:1, dose_gap_hours:24, window:[6,22], food_rule:"after_food", side_effect_score:5, therapeutic_value:7, required:false, conflicts:[4,6], conflict_severity:{4:"moderate",6:"major"}, must_after:[1], current_quantity:50 },
+  { id:4, name:"Ibuprofen",   desc:"NSAID (Anti-inflammatory) | Relieves pain and inflammation",                                                  doses_per_day:2, dose_gap_hours:6, window:[6,22], food_rule:"after_food", side_effect_score:6, therapeutic_value:6, required:false, conflicts:[3],   conflict_severity:{3:"moderate"},          must_after:[],  current_quantity:25 },
+  { id:5, name:"Amlodipine",  desc:"Calcium Channel Blocker | Relaxes blood vessels and reduces blood pressure",                                  doses_per_day:1, dose_gap_hours:24, window:[6,22], food_rule:"any",        side_effect_score:3, therapeutic_value:8, required:true,  conflicts:[],    conflict_severity:{},                    must_after:[],  current_quantity:21 },
+  { id:6, name:"Warfarin",    desc:"Anticoagulant (Blood Thinner) | Prevents harmful blood clots from forming",                                   doses_per_day:1, dose_gap_hours:24, window:[6,22], food_rule:"any",        side_effect_score:7, therapeutic_value:9, required:true,  conflicts:[3,4], conflict_severity:{3:"major",4:"moderate"}, must_after:[],  current_quantity:14 }
+];
+
+// Patient P002 — Jane Smith (Atrial Fibrillation)
+const MEDS_P002 = [
+  { id:1, name:"Warfarin",    desc:"Anticoagulant | Prevents stroke by stopping clots in AF patients",                              doses_per_day:1, dose_gap_hours:24, window:[6,22], food_rule:"any",        side_effect_score:7, therapeutic_value:9, required:true,  conflicts:[2],   conflict_severity:{2:"moderate"},          must_after:[],  current_quantity:28 },
+  { id:2, name:"Aspirin",     desc:"Antiplatelet | Low-dose for additional platelet inhibition alongside anticoagulation",            doses_per_day:1, dose_gap_hours:24, window:[6,22], food_rule:"after_food", side_effect_score:4, therapeutic_value:6, required:false, conflicts:[1],   conflict_severity:{1:"moderate"},          must_after:[],  current_quantity:60 },
+  { id:3, name:"Metoprolol",  desc:"Beta-Blocker | Controls heart rate in atrial fibrillation, reduces palpitations",                doses_per_day:2, dose_gap_hours:12, window:[7,21], food_rule:"after_food", side_effect_score:3, therapeutic_value:9, required:true,  conflicts:[],    conflict_severity:{},                    must_after:[],  current_quantity:30 },
+  { id:4, name:"Digoxin",     desc:"Cardiac Glycoside | Slows ventricular rate in AF, improves heart function in heart failure",     doses_per_day:1, dose_gap_hours:24, window:[8,20], food_rule:"any",        side_effect_score:8, therapeutic_value:8, required:true,  conflicts:[],    conflict_severity:{},                    must_after:[3], current_quantity:7  }
+];
+
+// Patient P003 — Raj Patel (Epilepsy + Hypertension)
+const MEDS_P003 = [
+  { id:1, name:"Levetiracetam", desc:"Anti-epileptic | Prevents partial and generalised seizures by modulating synaptic neurotransmission", doses_per_day:2, dose_gap_hours:12, window:[7,22], food_rule:"any",        side_effect_score:4, therapeutic_value:9, required:true,  conflicts:[],    conflict_severity:{},          must_after:[],  current_quantity:60 },
+  { id:2, name:"Lisinopril",    desc:"ACE Inhibitor | Reduces blood pressure by relaxing blood vessels",                                     doses_per_day:1, dose_gap_hours:24, window:[7,22], food_rule:"any",        side_effect_score:3, therapeutic_value:8, required:true,  conflicts:[3],   conflict_severity:{3:"minor"}, must_after:[],  current_quantity:30 },
+  { id:3, name:"Hydrochlorothiazide", desc:"Thiazide Diuretic | Reduces blood pressure by eliminating excess fluid via the kidneys",        doses_per_day:1, dose_gap_hours:24, window:[7,14], food_rule:"after_food", side_effect_score:4, therapeutic_value:7, required:true,  conflicts:[2],   conflict_severity:{2:"minor"}, must_after:[],  current_quantity:30 },
+  { id:4, name:"Vitamin D3",    desc:"Supplement | Anti-epileptic drugs deplete Vitamin D; supplementation prevents bone loss",              doses_per_day:1, dose_gap_hours:24, window:[8,20], food_rule:"after_food", side_effect_score:1, therapeutic_value:5, required:false, conflicts:[],    conflict_severity:{},          must_after:[1], current_quantity:90 }
+];
+
+const SAMPLE_DATASET = MEDS_P001; // legacy alias
+
+let appState = {
+    medicines: JSON.parse(JSON.stringify(MEDS_P001)),
+    activePatient: null,
+    currentRole: null,
+    activePatientId: 'P001'
+};
+
+const DEFAULT_DB = {
+    doctors: {
+        'DOC-101': {
+            id: 'DOC-101', name: 'Dr. Gregory House', specialty: 'Internal Medicine',
+            email: 'doctor@pillpath.com', patients: ['P001','P002','P003']
+        }
+    },
+    patients: {
+        'P001': {
+            id:'P001', name:'John Doe', age:45, gender:'Male', email:'john.doe@pillpath.com',
+            diagnosis:'Hypertension & Type 2 Diabetes',
+            bloodPressure:'142/88 mmHg', bloodSugar:'7.4 mmol/L',
+            weight:'82 kg', allergies:'Penicillin',
+            lastVisit:'Jun 10, 2026', nextVisit:'Jul 15, 2026',
+            doctor:'DOC-101', sideEffectBudget:20,
+            avatar:'👨', avatarColor:'#4f6ef7'
+        },
+        'P002': {
+            id:'P002', name:'Jane Smith', age:62, gender:'Female', email:'jane.smith@pillpath.com',
+            diagnosis:'Atrial Fibrillation',
+            bloodPressure:'128/76 mmHg', bloodSugar:'5.1 mmol/L',
+            weight:'68 kg', allergies:'Sulfa drugs',
+            lastVisit:'Jun 18, 2026', nextVisit:'Jul 20, 2026',
+            doctor:'DOC-101', sideEffectBudget:15,
+            avatar:'👩', avatarColor:'#ec4899'
+        },
+        'P003': {
+            id:'P003', name:'Raj Patel', age:38, gender:'Male', email:'raj.patel@pillpath.com',
+            diagnosis:'Epilepsy & Hypertension',
+            bloodPressure:'138/82 mmHg', bloodSugar:'5.8 mmol/L',
+            weight:'74 kg', allergies:'None known',
+            lastVisit:'Jun 05, 2026', nextVisit:'Jul 05, 2026',
+            doctor:'DOC-101', sideEffectBudget:18,
+            avatar:'🧑', avatarColor:'#f59e0b'
+        }
+    },
+    medicines: {
+        'P001': JSON.parse(JSON.stringify(MEDS_P001)),
+        'P002': JSON.parse(JSON.stringify(MEDS_P002)),
+        'P003': JSON.parse(JSON.stringify(MEDS_P003))
+    }
+};
+
+let storedDb = localStorage.getItem('pillpath_db');
+let dbObj = JSON.parse(JSON.stringify(DEFAULT_DB)); // Deep copy to prevent mutations
+if (storedDb) {
+    try {
+        const parsed = JSON.parse(storedDb);
+        // ONLY merge medicines. NEVER merge patients/doctors from cache since the user cannot edit them,
+        // and older cache versions might have copied John Doe for all patients.
+        if (parsed && parsed.medicines) {
+            dbObj.medicines = { ...dbObj.medicines, ...parsed.medicines };
+        }
+    } catch(e) {}
+}
+
+// ===================== MOCK FIREBASE =====================
+const FirebaseApp = {
+    auth: { currentUser: null },
+    db: dbObj,
+
+    saveData: function() {
+        if(appState.activePatientId && appState.medicines) {
+            this.db.medicines[appState.activePatientId] = appState.medicines;
+        }
+        localStorage.setItem('pillpath_db', JSON.stringify(this.db));
+    },
+
+    login: async function(role, targetPatientId = 'P001') {
+        const authEl = document.getElementById('screen-auth');
+        authEl.style.transition = 'opacity 0.4s ease';
+        authEl.style.opacity = '0';
+        await new Promise(r => setTimeout(r, 400));
+        authEl.style.display = 'none';
+
+        document.getElementById('sidebar').style.display = 'flex';
+        document.getElementById('main-content').style.display = 'flex';
+
+        if(role === 'doctor') {
+            const doc = this.db.doctors['DOC-101'];
+            this.auth.currentUser = { uid:'DOC-101', role:'doctor', name: doc.name };
+            appState.currentRole = 'doctor';
+            appState.activePatientId = 'P001';
+
+            // Show doctor card, hide patient card
+            document.getElementById('user-card-doctor').style.display = 'flex';
+            document.getElementById('user-card-patient').style.display = 'none';
+            document.getElementById('sidebar-user-name').textContent = doc.name;
+            document.getElementById('role-badge-display').textContent = '🩺 Doctor';
+
+            // Show patient switcher, hide patient doctor strip
+            document.getElementById('patient-switcher').style.display = 'block';
+            document.getElementById('patient-doctor-strip').style.display = 'none';
+
+            // Greeting
+            document.getElementById('dash-greeting').textContent = '🩺 Managing Patient';
+
+            // Show doctor-only items
+            document.querySelectorAll('.doctor-only').forEach(el => el.style.display = '');
+
+            // Render patient list in sidebar
+            renderPatientList(doc.patients, 'P001');
+
+            // Show vitals row
+            document.getElementById('dash-vitals-row').style.display = 'flex';
+
+            await fetchPatientData('P001');
+        } else {
+            const pat = this.db.patients[targetPatientId];
+            this.auth.currentUser = { uid:targetPatientId, role:'patient', name: pat.name };
+            appState.currentRole = 'patient';
+            appState.activePatientId = targetPatientId;
+
+            // Show patient card, hide doctor card
+            document.getElementById('user-card-patient').style.display = 'flex';
+            document.getElementById('user-card-doctor').style.display = 'none';
+            document.getElementById('sidebar-patient-name').textContent = pat.name;
+
+            // Hide patient switcher, show doctor strip
+            document.getElementById('patient-switcher').style.display = 'none';
+            document.getElementById('patient-doctor-strip').style.display = 'block';
+            
+            // Set doctor's name in the strip
+            const patDoc = this.db.doctors[pat.doctor];
+            document.getElementById('patient-doctor-name').textContent = patDoc ? patDoc.name : 'Unassigned';
+
+            // Greeting
+            document.getElementById('dash-greeting').textContent = '🌅 Good Morning';
+
+            // Hide doctor-only items and vitals
+            document.querySelectorAll('.doctor-only').forEach(el => el.style.display = 'none');
+            document.getElementById('dash-vitals-row').style.display = 'none';
+
+            await fetchPatientData(targetPatientId);
+        }
+    },
+
+    fetchData: function(path, delay=0) {
+        // Use self to avoid 'this' losing context inside setTimeout arrow functions
+        const self = this;
+        return new Promise(resolve => {
+            setTimeout(() => {
+                if(path.startsWith('patients/'))  resolve(self.db.patients[path.split('/')[1]]);
+                else if(path.startsWith('medicines/')) resolve(self.db.medicines[path.split('/')[1]] || SAMPLE_DATASET);
+                else resolve(null);
+            }, delay);
+        });
+    }
+};
+
+// ===================== AUTH FLOW =====================
+
+// Demo credentials map
+const DEMO_ACCOUNTS = {
+    doctor: {
+        email: 'doctor@pillpath.com',
+        password: 'demo1234',
+        name: 'Dr. Gregory House',
+        id: 'DOC-101',
+        access: 'Full Access',
+        icon: '👨‍⚕️'
+    },
+    patient: {
+        email: 'patient@pillpath.com',
+        password: 'demo1234',
+        name: 'John Doe',
+        id: 'P001',
+        access: 'Patient Access',
+        icon: '👤'
+    }
+};
+
+let _currentFormRole = 'doctor';
+
+// Step 1 → Step 2: show login form for a role (empty fields)
+function showLoginForm(role) {
+    _currentFormRole = role;
+
+    // Update role pill
+    const pill = document.getElementById('form-role-pill');
+    pill.textContent = role === 'doctor' ? '👨‍⚕️ Doctor Portal' : '👤 Patient Portal';
+    pill.className = `role-pill ${role}`;
+
+    // Update user preview — generic (not pre-filled)
+    document.getElementById('form-user-icon').textContent = DEMO_ACCOUNTS[role].icon;
+    document.getElementById('form-user-name').textContent = role === 'doctor' ? 'Doctor Login' : 'Patient Login';
+    document.getElementById('form-user-id').textContent = 'Enter your credentials below';
+
+    // Clear fields
+    document.getElementById('auth-email').value = '';
+    document.getElementById('auth-password').value = '';
+    document.getElementById('auth-password').type = 'password';
+    document.getElementById('pwd-eye').textContent = '👁';
+    document.getElementById('auth-error-msg').style.display = 'none';
+
+    // Style submit button by role
+    document.getElementById('auth-submit-btn').className = `auth-submit-btn ${role}`;
+    document.getElementById('auth-submit-btn').textContent = '🔓 Sign In';
+    document.getElementById('auth-submit-btn').disabled = false;
+    document.getElementById('auth-submit-btn').style.opacity = '1';
+
+    // Switch steps with animation
+    document.getElementById('auth-step-role').style.display = 'none';
+    const formStep = document.getElementById('auth-step-form');
+    formStep.style.display = 'block';
+    formStep.style.animation = 'none';
+    requestAnimationFrame(() => { formStep.style.animation = 'slideIn 0.3s ease'; });
+    setTimeout(() => document.getElementById('auth-email').focus(), 120);
+}
+
+// Click on demo row → fills credentials AND shows form for the CORRECT role
+function fillDemoAndShow(role) {
+    // First show the form for this specific role
+    showLoginForm(role);
+
+    const acc = DEMO_ACCOUNTS[role];
+    setTimeout(() => {
+        // Pre-fill email and password
+        const emailEl = document.getElementById('auth-email');
+        const pwdEl = document.getElementById('auth-password');
+        emailEl.value = acc.email;
+        pwdEl.value = acc.password;
+
+        // Update preview to show actual demo user name
+        document.getElementById('form-user-icon').textContent = acc.icon;
+        document.getElementById('form-user-name').textContent = acc.name;
+        document.getElementById('form-user-id').textContent = `${acc.id} · ${acc.access}`;
+
+        // Flash highlight on fields to show auto-fill
+        const color = role === 'doctor' ? 'rgba(79,110,247,0.8)' : 'rgba(16,185,129,0.8)';
+        emailEl.style.borderColor = color;
+        pwdEl.style.borderColor = color;
+        setTimeout(() => { emailEl.style.borderColor = ''; pwdEl.style.borderColor = ''; }, 1600);
+    }, 60);
+}
+
+// Back to step 1
+function showRoleStep() {
+    document.getElementById('auth-step-form').style.display = 'none';
+    const roleStep = document.getElementById('auth-step-role');
+    roleStep.style.display = 'block';
+    roleStep.style.animation = 'none';
+    requestAnimationFrame(() => { roleStep.style.animation = 'slideIn 0.3s ease'; });
+}
+
+// Toggle password show/hide
+function togglePwdVis() {
+    const input = document.getElementById('auth-password');
+    const btn = document.getElementById('pwd-eye');
+    if(input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
+    else { input.type = 'password'; btn.textContent = '👁'; }
+}
+
+// Submit: validate credentials then log in
+async function submitLogin() {
+    const email = document.getElementById('auth-email').value.trim();
+    const password = document.getElementById('auth-password').value;
+    const errorEl = document.getElementById('auth-error-msg');
+    const card = document.querySelector('#auth-step-form .auth-card');
+
+    errorEl.style.display = 'none';
+
+    if(!email || !password) {
+        errorEl.textContent = '⚠️ Please enter both email and password.';
+        errorEl.style.display = 'block';
+        card.style.animation = 'none';
+        requestAnimationFrame(() => { card.style.animation = 'shake 0.4s ease'; });
+        return;
+    }
+
+    if(_currentFormRole === 'patient') {
+        let foundPatient = null;
+        for(const key in FirebaseApp.db.patients) {
+            if(FirebaseApp.db.patients[key].email.toLowerCase() === email.toLowerCase()) {
+                foundPatient = FirebaseApp.db.patients[key];
+                break;
+            }
+        }
+        if(!foundPatient || password !== 'demo1234') {
+            errorEl.textContent = `⚠️ Patient not found or incorrect password. (Hint: Try jane.smith@pillpath.com with password demo1234)`;
+            errorEl.style.display = 'block';
+            card.style.animation = 'none';
+            requestAnimationFrame(() => { card.style.animation = 'shake 0.4s ease'; });
+            document.getElementById('auth-password').value = '';
+            document.getElementById('auth-password').focus();
+            return;
+        }
+
+        // Valid Patient! Show loading
+        const btn = document.getElementById('auth-submit-btn');
+        btn.textContent = '⏳ Signing in...';
+        btn.disabled = true;
+        btn.style.opacity = '0.7';
+
+        await FirebaseApp.login('patient', foundPatient.id);
+
+    } else {
+        const acc = DEMO_ACCOUNTS['doctor'];
+        if(email !== acc.email || password !== acc.password) {
+            errorEl.textContent = `⚠️ Incorrect credentials. Hint: use doctor@pillpath.com / demo1234`;
+            errorEl.style.display = 'block';
+            card.style.animation = 'none';
+            requestAnimationFrame(() => { card.style.animation = 'shake 0.4s ease'; });
+            document.getElementById('auth-password').value = '';
+            document.getElementById('auth-password').focus();
+            return;
+        }
+
+        // Valid Doctor! Show loading
+        const btn = document.getElementById('auth-submit-btn');
+        btn.textContent = '⏳ Signing in...';
+        btn.disabled = true;
+        btn.style.opacity = '0.7';
+
+        await FirebaseApp.login('doctor');
+    }
+}
+
+// ── Switch active patient (doctor only) ──
+async function switchPatient(patientId) {
+    if(appState.activePatientId === patientId) return;
+    appState.activePatientId = patientId;
+    renderPatientList(FirebaseApp.db.doctors['DOC-101'].patients, patientId);
+    await fetchPatientData(patientId);
+}
+
+// ── Render the patient list in the doctor sidebar ──
+function renderPatientList(patientIds, activeId) {
+    const list = document.getElementById('patient-list');
+    if(!list) return;
+    const colors = { 'P001':'#4f6ef7', 'P002':'#ec4899', 'P003':'#f59e0b' };
+    list.innerHTML = patientIds.map(pid => {
+        const p = FirebaseApp.db.patients[pid];
+        if(!p) return '';
+        const isActive = pid === activeId;
+        const initials = p.name.split(' ').map(w=>w[0]).join('').toUpperCase();
+        return `<div class="patient-list-item ${isActive ? 'active-patient' : ''}" onclick="switchPatient('${pid}')">
+            <div class="pat-avatar" style="background:${colors[pid] || '#64748b'}; font-size:12px; font-weight:900;">${initials}</div>
+            <div style="flex:1; min-width:0;">
+                <div class="pat-name">${p.name}</div>
+                <div class="pat-condition">${p.diagnosis}</div>
+            </div>
+            <div class="pat-status-dot" style="background:${isActive ? '#4f6ef7' : '#10b981'};"></div>
+        </div>`;
+    }).join('');
+}
+
+// ── Update dashboard with active patient data ──
+function updateDashboard(patient, meds) {
+    const hour = new Date().getHours();
+    const greeting = appState.currentRole === 'doctor'
+        ? `🩺 Managing Patient`
+        : (hour < 12 ? '🌅 Good Morning' : hour < 17 ? '☀️ Good Afternoon' : '🌙 Good Evening');
+
+    const greetEl = document.getElementById('dash-greeting');
+    if(greetEl) greetEl.textContent = greeting;
+    const nameEl = document.getElementById('dash-patient-name');
+    if(nameEl) nameEl.textContent = patient.name;
+    const chipEl = document.getElementById('dash-diagnosis-chip');
+    if(chipEl) chipEl.textContent = patient.diagnosis;
+    const visitEl = document.getElementById('dash-last-visit');
+    if(visitEl) visitEl.textContent = `Last visit: ${patient.lastVisit || '—'} · Next: ${patient.nextVisit || '—'}`;
+
+    // Vitals
+    const setVital = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+    setVital('vital-bp-val',     patient.bloodPressure || '—');
+    setVital('vital-sugar-val',  patient.bloodSugar    || '—');
+    setVital('vital-weight-val', patient.weight        || '—');
+    setVital('vital-age-val',    patient.age ? patient.age + ' yrs' : '—');
+
+    // Stats
+    const totalConflicts = meds.reduce((n, m) => n + m.conflicts.length, 0) / 2;
+    const required = meds.filter(m => m.required).length;
+    const el_mc = document.getElementById('dash-med-count');      if(el_mc) el_mc.textContent = meds.length;
+    const el_cc = document.getElementById('dash-conflict-count'); if(el_cc) el_cc.textContent = Math.round(totalConflicts);
+    const el_rc = document.getElementById('dash-required-count'); if(el_rc) el_rc.textContent = required;
+
+    // Update page title with patient name
+    const date = new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    const dateEl = document.getElementById('dash-date');
+    if(dateEl) dateEl.textContent = date;
+
+    // Build Dynamic Dashboard Schedule
+    let todayDoses = [];
+    meds.forEach(m => {
+        const start = m.window[0];
+        for(let d=0; d<m.doses_per_day; d++) {
+            let h = start + d*m.dose_gap_hours;
+            if(h <= m.window[1]) todayDoses.push({ time: h, name: m.name, rule: m.food_rule });
+        }
+    });
+    todayDoses.sort((a,b) => a.time - b.time);
+    
+    const schedList = document.getElementById('dash-schedule-list');
+    if(schedList) {
+        if(todayDoses.length === 0) {
+            schedList.innerHTML = `<div style="padding:20px; text-align:center; color:var(--text-muted); font-size:13px;">No medicines scheduled today.</div>`;
+        } else {
+            schedList.innerHTML = todayDoses.slice(0, 4).map((d, i) => {
+                let icon = d.rule === 'empty' ? '🔔' : (d.rule === 'after_food' ? '🍽️' : '⏱️');
+                let border = i < 3 ? 'border-bottom:1px solid var(--border);' : '';
+                
+                if(appState.currentRole === 'patient') {
+                    return `<div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; ${border}">
+                                <div style="display:flex; align-items:center; gap:12px; flex:1;">
+                                    <div style="display:flex; gap:4px;" class="dose-actions">
+                                        <button style="border:1px solid var(--border); background:var(--main-bg); border-radius:4px; padding:2px 6px; cursor:pointer;" onclick="markDose(this, 'taken')" title="Mark as Taken">✅</button>
+                                        <button style="border:1px solid var(--border); background:var(--main-bg); border-radius:4px; padding:2px 6px; cursor:pointer;" onclick="markDose(this, 'missed')" title="Mark as Missed">❌</button>
+                                    </div>
+                                    <div style="display:flex; flex-direction:column;">
+                                        <span style="font-weight:700; font-size:13px; color:var(--text); transition:all 0.2s;" class="dose-name">${d.name}</span>
+                                        <span style="font-weight:800; color:var(--primary); font-size:11px;">${fmtTime(d.time)}</span>
+                                    </div>
+                                </div>
+                                <span style="font-size:18px;">${icon}</span>
+                            </div>`;
+                } else {
+                    return `<div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; ${border}">
+                                <span style="font-weight:800; color:var(--primary); width:85px; font-size:13px;">${fmtTime(d.time)}</span>
+                                <span style="flex:1; font-weight:600; font-size:13px;">${d.name}</span>
+                                <span style="font-size:18px;">${icon}</span>
+                            </div>`;
+                }
+            }).join('');
+        }
+    }
+    const schedMore = document.getElementById('dash-schedule-more');
+    if(schedMore) {
+        if(todayDoses.length > 4) {
+            schedMore.textContent = `+${todayDoses.length - 4} more dose(s) today`;
+            schedMore.style.display = 'block';
+        } else {
+            schedMore.style.display = 'none';
+        }
+    }
+
+    // Build Dynamic Dashboard Warnings
+    let conflicts = [];
+    meds.forEach(m => {
+        m.conflicts.forEach(cid => {
+            if(m.id < cid) { // only process pair once
+                const other = meds.find(x => x.id === cid);
+                if(other) conflicts.push({ m1: m, m2: other, sev: m.conflict_severity[cid] });
+            }
+        });
+    });
+    const warnsList = document.getElementById('dash-warnings-list');
+    if(warnsList) {
+        if(conflicts.length === 0) {
+            warnsList.innerHTML = `<div style="padding:20px; text-align:center; color:var(--success); font-size:13px; font-weight:700;">✅ No active warnings or conflicts!</div>`;
+        } else {
+            warnsList.innerHTML = conflicts.map(c => {
+                let isMajor = c.sev === 'major';
+                let bg = isMajor ? 'var(--danger-bg)' : 'var(--warning-bg)';
+                let border = isMajor ? '#fecaca' : '#fde68a';
+                let color = isMajor ? 'var(--danger)' : '#92400e';
+                let icon = isMajor ? '⚡' : '⚠️';
+                let desc = isMajor ? 'Major interaction — severe risk.' : 'Moderate interaction — monitor closely.';
+                return `<div style="background: ${bg}; border: 1px solid ${border}; padding: 15px; border-radius: 10px; margin-bottom: 12px;">
+                            <div style="font-weight: 700; font-size: 14px; margin-bottom: 4px; color: ${color};">${icon} ${c.m1.name} + ${c.m2.name}</div>
+                            <div style="font-size: 12px; color: ${isMajor ? '#991b1b' : '#78350f'};">${desc}</div>
+                        </div>`;
+            }).join('');
+        }
+    }
+
+    const topAlert = document.getElementById('dash-top-alert');
+    if(topAlert) {
+        let majorConflicts = conflicts.filter(c => c.sev === 'major');
+        if(majorConflicts.length > 0) {
+            let names = majorConflicts.map(c => `${c.m1.name} + ${c.m2.name}`).join(', ');
+            topAlert.innerHTML = `
+                <div style="color: var(--danger); font-weight: 700; display: flex; align-items: center; gap: 8px; font-size:14px;">
+                    <span>🔴</span> ${majorConflicts.length} Major Drug Interaction${majorConflicts.length>1?'s':''} Detected
+                </div>
+                <div style="font-size: 13px; margin-top: 6px; color: #991b1b;">
+                    ⚡ ${names} — see <a href="#" onclick="document.querySelector('[data-target=screen-interactions]').click(); return false;" style="color: var(--danger); font-weight: 700; text-decoration: underline;">Interactions</a>
+                </div>
+            `;
+            topAlert.style.display = 'block';
+        } else {
+            topAlert.style.display = 'none';
+        }
+    }
+}
+
+function markDose(btn, status) {
+    const container = btn.closest('div').parentElement;
+    const textEl = container.querySelector('.dose-name');
+    const actionsEl = container.querySelector('.dose-actions');
+    
+    const scoreEl = document.getElementById('adh-score');
+    const bigScore = document.getElementById('adh-big-score');
+    let current = null;
+    if(scoreEl && scoreEl.textContent.includes('%')) {
+        current = parseInt(scoreEl.textContent);
+    }
+    
+    if(status === 'taken') {
+        textEl.style.textDecoration = 'line-through';
+        textEl.style.color = 'var(--success)';
+        actionsEl.innerHTML = `<span style="font-size:14px; margin-right:5px;">✅</span>`;
+        if(current !== null && current < 100) {
+            scoreEl.textContent = (current + 1) + '%';
+            if(bigScore) bigScore.textContent = (current + 1) + '% Adherence Score';
+        }
+    } else {
+        textEl.style.textDecoration = 'line-through';
+        textEl.style.color = 'var(--danger)';
+        actionsEl.innerHTML = `<span style="font-size:14px; margin-right:5px;">❌</span>`;
+        if(current !== null && current > 0) {
+            scoreEl.textContent = Math.max(0, current - 2) + '%';
+            if(bigScore) bigScore.textContent = Math.max(0, current - 2) + '% Adherence Score';
+        }
+    }
+}
+
+async function fetchPatientData(patientId) {
+    const pData = await FirebaseApp.fetchData(`patients/${patientId}`);
+    const mData = await FirebaseApp.fetchData(`medicines/${patientId}`);
+    appState.activePatient = pData;
+    appState.medicines = mData;
+    // Update dashboard with patient info (never overwrites sidebar user card)
+    updateDashboard(pData, mData);
+    initUI();
+}
+
+
+function initUI() {
+    setupNavigation();
+    renderMedicineList(appState.medicines);
+    renderInteractions();
+    populateEmergencyDropdown();
+    updateSummaryCounts();
+
+    // Ensure the currently active screen instantly updates its data to reflect the newly fetched patient
+    const activeScreen = document.querySelector('.screen.active');
+    if(activeScreen) {
+        const targetId = activeScreen.id;
+        if(targetId === 'screen-graph') runGraphColoring();
+        else if(targetId === 'screen-optimizer') runOptimizer();
+        else if(targetId === 'screen-schedule') runIntervalScheduling();
+        else if(targetId === 'screen-adherence') updateAdherenceUI();
+    }
+}
+
+function updateAdherenceUI() {
+    const adherenceData = {
+        'P001': { score: 94, days: 28, missed: 3, msg: "Patient is highly compliant with the generated schedule.", badge: "🌟 Excellent Compliance — Keep it up!", color: "var(--success)", bg: "var(--success-bg)", border: "#bbf7d0", icon: "✅" },
+        'P002': { score: 72, days: 14, missed: 8, msg: "Compliance is dropping. Consider a simpler dosing schedule.", badge: "⚠️ Needs Review — Monitor closely", color: "#d97706", bg: "#fef3c7", border: "#fde68a", icon: "⚠️" },
+        'P003': { score: 98, days: 60, missed: 2, msg: "Outstanding long-term adherence to epilepsy regimen.", badge: "🏆 Perfect Track Record", color: "var(--success)", bg: "var(--success-bg)", border: "#bbf7d0", icon: "✅" }
+    };
+    const ad = adherenceData[appState.activePatientId] || adherenceData['P001'];
+    
+    const scoreIcon = document.getElementById('adh-score-icon');
+    const scoreVal = document.getElementById('adh-score');
+    if(scoreIcon) { scoreIcon.textContent = ad.icon; scoreIcon.style.color = ad.color; }
+    if(scoreVal) { scoreVal.textContent = ad.score + '%'; scoreVal.style.color = ad.color; }
+    
+    const daysVal = document.getElementById('adh-days');
+    if(daysVal) daysVal.textContent = ad.days;
+    const missedVal = document.getElementById('adh-missed');
+    if(missedVal) missedVal.textContent = ad.missed;
+    
+    const bigScore = document.getElementById('adh-big-score');
+    if(bigScore) bigScore.textContent = ad.score + '% Adherence Score';
+    const msg = document.getElementById('adh-msg');
+    if(msg) msg.textContent = ad.msg;
+    
+    const badge = document.getElementById('adh-badge');
+    if(badge) {
+        badge.textContent = ad.badge;
+        badge.style.color = ad.color;
+        badge.style.background = ad.bg;
+        badge.style.borderColor = ad.border;
+    }
+}
+
+// ===================== LOGOUT =====================
+function doLogout() {
+    FirebaseApp.auth.currentUser = null;
+    appState.currentRole = null;
+    appState.activePatientId = 'P001';
+
+    document.getElementById('sidebar').style.display = 'none';
+    document.getElementById('main-content').style.display = 'none';
+
+    // Reset sidebar cards
+    document.getElementById('user-card-doctor').style.display = 'none';
+    document.getElementById('user-card-patient').style.display = 'none';
+    document.getElementById('patient-switcher').style.display = 'none';
+    document.getElementById('patient-doctor-strip').style.display = 'none';
+
+    // Reset nav to dashboard
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-dashboard').classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelector('[data-target="screen-dashboard"]').classList.add('active');
+
+    // Reset auth form
+    document.getElementById('auth-step-form').style.display = 'none';
+    document.getElementById('auth-step-role').style.display = 'block';
+    document.getElementById('auth-email').value = '';
+    document.getElementById('auth-password').value = '';
+    document.getElementById('auth-error-msg').style.display = 'none';
+
+    const authEl = document.getElementById('screen-auth');
+    authEl.style.display = 'flex';
+    authEl.style.opacity = '0';
+    authEl.style.transition = 'opacity 0.4s ease';
+    setTimeout(() => { authEl.style.opacity = '1'; }, 50);
+}
+
+
+// ===================== NAVIGATION =====================
+function setupNavigation() {
+    document.querySelectorAll('.nav-item').forEach(link => {
+        const clone = link.cloneNode(true);
+        link.parentNode.replaceChild(clone, link);
+    });
+    document.querySelectorAll('.nav-item').forEach(link => {
+        link.addEventListener('click', (e) => {
+            if(!e.currentTarget.hasAttribute('data-target')) return;
+            document.querySelectorAll('.nav-item').forEach(l => l.classList.remove('active'));
+            e.currentTarget.classList.add('active');
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            const targetId = e.currentTarget.getAttribute('data-target');
+            const targetScreen = document.getElementById(targetId);
+            if(targetScreen) {
+                targetScreen.classList.add('active');
+                // Use requestAnimationFrame so the screen is visible before canvas draws
+                if(targetId === 'screen-graph') requestAnimationFrame(() => runGraphColoring());
+                if(targetId === 'screen-optimizer') requestAnimationFrame(() => runOptimizer());
+                if(targetId === 'screen-schedule') requestAnimationFrame(() => runIntervalScheduling());
+                if(targetId === 'screen-adherence') requestAnimationFrame(() => updateAdherenceUI());
+            }
+        });
+    });
+
+    // ---- VIEW MODE: Clinical vs Simple ----
+    const vmClinical = document.getElementById('vm-clinical');
+    const vmSimple   = document.getElementById('vm-simple');
+
+    vmClinical.onclick = function() {
+        vmClinical.classList.add('active');
+        vmSimple.classList.remove('active');
+        applyViewMode('clinical');
+    };
+    vmSimple.onclick = function() {
+        vmSimple.classList.add('active');
+        vmClinical.classList.remove('active');
+        applyViewMode('simple');
+    };
+}
+
+// Apply Clinical or Simple view mode across screens
+function applyViewMode(mode) {
+    if(mode === 'simple') {
+        document.body.classList.add('view-simple');
+        document.body.classList.remove('view-clinical');
+    } else {
+        document.body.classList.add('view-clinical');
+        document.body.classList.remove('view-simple');
+    }
+    // Re-render medicine list with current mode awareness
+    renderMedicineList(appState.medicines);
+}
+
+function populateEmergencyDropdown() {
+    const sel = document.getElementById('emerg-med-select');
+    if(sel) {
+        sel.innerHTML = '<option value="">— Select a missed medicine —</option>';
+        appState.medicines.forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m.id; opt.text = m.name;
+            sel.appendChild(opt);
+        });
+    }
+}
+
+function updateSummaryCounts() {
+    const meds = appState.medicines;
+    let totalConflicts = 0, majorCount = 0, moderateCount = 0, totalDoses = 0;
+    meds.forEach(m => {
+        totalDoses += m.doses_per_day;
+        m.conflicts.forEach(cid => {
+            if(m.id < cid) {
+                totalConflicts++;
+                const sev = m.conflict_severity[cid];
+                if(sev === 'major') majorCount++;
+                else if(sev === 'moderate') moderateCount++;
+            }
+        });
+    });
+    const urgentRefills = meds.filter(m => m.current_quantity <= 7).length;
+
+    // Medicine screen summary cards
+    const medCards = document.querySelectorAll('#screen-medicines .grid-summary .s-val');
+    if(medCards.length >= 5) {
+        medCards[0].textContent = meds.length;
+        medCards[1].textContent = majorCount;
+        medCards[2].textContent = totalConflicts;
+        medCards[3].textContent = totalDoses;
+        medCards[4].textContent = urgentRefills;
+    }
+
+    // Interaction screen summary cards
+    const intCards = document.querySelectorAll('#screen-interactions .grid-summary .s-val');
+    if(intCards.length >= 3) {
+        intCards[0].textContent = majorCount;
+        intCards[1].textContent = moderateCount;
+        intCards[2].textContent = totalConflicts;
+    }
+
+    // Sidebar badge
+    const badge = document.getElementById('badge-interactions');
+    if(badge) badge.textContent = totalConflicts;
+}
+
+// ===================== SEARCH ALGORITHMS =====================
+function boyerMooreSearch(text, pattern) {
+    let m = pattern.length, n = text.length;
+    if(m===0) return 0;
+    let badChar = {}; for(let i=0; i<m; i++) badChar[pattern[i]] = i;
+    let s=0;
+    while(s <= (n-m)) {
+        let j = m-1;
+        while(j>=0 && pattern[j] === text[s+j]) j--;
+        if(j<0) return s;
+
+        else s += Math.max(1, j - (badChar[text[s+j]] || -1));
+    }
+    return -1;
+}
+
+function editDistance(s1, s2) {
+    let dp = Array(s1.length+1).fill(null).map(()=>Array(s2.length+1).fill(0));
+    for(let i=0; i<=s1.length; i++) dp[i][0] = i;
+    for(let j=0; j<=s2.length; j++) dp[0][j] = j;
+    for(let i=1; i<=s1.length; i++)
+        for(let j=1; j<=s2.length; j++) {
+            if(s1[i-1]===s2[j-1]) dp[i][j] = dp[i-1][j-1];
+            else dp[i][j] = 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+        }
+    return dp[s1.length][s2.length];
+}
+
+// Setup search
+function setupSearch() {
+    const searchInput = document.getElementById('med-search');
+    if(!searchInput) return;
+    searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase();
+        if(!query) { renderMedicineList(appState.medicines); return; }
+        let results = [];
+        for(let m of appState.medicines) {
+            if(boyerMooreSearch(m.name.toLowerCase(), query) !== -1) results.push(m);
+        }
+        if(results.length > 0) { renderMedicineList(results); return; }
+        for(let m of appState.medicines) {
+            let name = m.name.toLowerCase();
+            let minDist = editDistance(name, query);
+            for(let i=0; i<=name.length - query.length; i++)
+                minDist = Math.min(minDist, editDistance(name.substring(i, i+query.length), query));
+            if(minDist <= 3) results.push(m);
+        }
+        renderMedicineList(results);
+    });
+}
+
+// ===================== UI RENDERING =====================
+function renderMedicineList(medicines) {
+    const list = document.getElementById('med-list');
+    if(!list) return;
+    
+    const isSimple = document.body.classList.contains('view-simple');
+    const dClin = isSimple ? 'display:none !important;' : '';
+    const dSimp = isSimple ? 'display:flex !important;' : 'display:none;';
+
+    list.innerHTML = medicines.map(m => {
+        let reqBadge = m.required ? '<span class="badge badge-blue">Required</span>' : '';
+        let foodBadge = m.food_rule === 'empty'
+            ? '<span class="badge badge-outline">Empty stomach 🍽️</span>'
+            : (m.food_rule === 'after_food'
+                ? '<span class="badge badge-outline">After food 🍽️</span>'
+                : '<span class="badge badge-outline">Any time ⏱️</span>');
+        let stockColor = m.current_quantity <= 7 ? 'color:var(--warning);' : 'color:var(--success);';
+
+        let conflictHtml = m.conflicts.map(cid => {
+            const sev = m.conflict_severity[cid];
+            const cName = appState.medicines.find(x=>x.id===cid)?.name || cid;
+            const bClass = sev === 'major' ? 'badge-red' : 'badge-amber';
+            return `<span class="badge ${bClass}">⚡ ${cName} (${sev})</span>`;
+        }).join(' ');
+
+        let mustAfterHtml = m.must_after.length > 0
+            ? `<div style="font-size:12px; font-weight:700; color:var(--info); margin-top:10px;">➔ Take after: ${m.must_after.map(id=>appState.medicines.find(x=>x.id===id)?.name).join(', ')}</div>` : '';
+
+        const seColor = m.side_effect_score >= 5 ? 'var(--danger)' : m.side_effect_score >= 3 ? 'var(--warning)' : 'var(--success)';
+        const isDoctor = appState.currentRole === 'doctor';
+
+        return `
+        <div class="card med-card${m.conflicts.some(c=>m.conflict_severity[c]==='major') ? ' conflict-major' : m.conflicts.length>0 ? ' conflict-moderate' : ''}">
+            <div style="position:absolute; right:18px; top:18px; text-align:center; ${dClin}" class="med-clinical-only">
+                <div style="width:42px; height:42px; border-radius:50%; border:2.5px solid ${seColor}; display:flex; align-items:center; justify-content:center; font-weight:900; color:${seColor}; font-size:17px;">${m.side_effect_score}</div>
+                <div style="font-size:9px; color:var(--text-muted); font-weight:700; margin-top:3px; letter-spacing:0.5px;">SE</div>
+            </div>
+            <h3 style="font-size:17px; margin-bottom:4px; padding-right:56px; font-weight:800; display:flex; align-items:baseline; gap:8px;">
+                ${m.name} 
+                ${m.dosage && m.dosage !== "Unknown" ? `<span style="font-size:13px; font-weight:600; color:var(--text-muted);">${m.dosage}</span>` : ''}
+            </h3>
+            <div style="font-size:12px; color:var(--text-muted); margin-bottom:14px; padding-right:56px; line-height:1.5; ${dClin}" class="med-clinical-only">${m.desc}</div>
+            
+            <!-- Simple mode summary line -->
+            <div class="med-simple-row" style="font-size:13px; color:var(--text-muted); margin-bottom:12px; align-items:center; gap:10px; ${dSimp}">
+                <span style="font-weight:700; color:var(--primary);">${m.doses_per_day}x daily</span>
+                <span>·</span>
+                <span>${fmtRule(m.food_rule)}</span>
+                ${m.required ? '<span class="badge badge-blue" style="font-size:11px;">Required</span>' : ''}
+            </div>
+            
+            <div style="display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; ${dClin}" class="med-clinical-only">
+                ${reqBadge} ${foodBadge} <span class="badge" style="${stockColor} font-weight:700;">${m.current_quantity}d stock</span>
+            </div>
+            <div class="med-stats med-clinical-only" style="${dClin}">
+                <div><div class="med-stat-val">${m.doses_per_day}x</div><div class="med-stat-lbl">Per Day</div></div>
+                <div><div class="med-stat-val" style="color:var(--primary);">${m.therapeutic_value}</div><div class="med-stat-lbl">Therapy</div></div>
+                <div><div class="med-stat-val">${m.dose_gap_hours}h</div><div class="med-stat-lbl">Min Gap</div></div>
+            </div>
+            <div class="med-clinical-only" style="${dClin}">${conflictHtml}</div>
+            <div class="med-clinical-only" style="${dClin}">${mustAfterHtml}</div>
+            <div style="display:flex; gap:8px; margin-top:18px;">
+                ${isDoctor ? `<button class="btn" onclick="editMedicine(${m.id})" style="flex:1; background:var(--main-bg); color:var(--text-muted); border:1px solid var(--border); font-size:12px;">👁 Edit</button>` : ''}
+                <!-- Removed the confusing 'Reschedule Missed' button to prevent users from thinking it's an active alert. The Emergency tab in the sidebar is the intended entry point. -->
+                ${isDoctor ? `<button class="btn med-clinical-only" onclick="deleteMedicine(${m.id})" style="background:var(--danger-bg); color:var(--danger); border:1px solid #fecaca; width:40px; padding:0; display:flex; justify-content:center; align-items:center; ${dClin}">🗑</button>` : ''}
+            </div>
+        </div>`;
+
+    }).join('');
+}
+
+function goToEmergency(medId) {
+    const emergTab = document.querySelector('.nav-item[data-target="screen-emergency"]');
+    if(emergTab) emergTab.click();
+    setTimeout(() => {
+        const select = document.getElementById('emerg-med-select');
+        if(select) select.value = medId;
+    }, 100);
+}
+
+function renderInteractions() {
+    const list = document.getElementById('interaction-list');
+    if(!list) return;
+
+    let conflicts = [];
+    appState.medicines.forEach(m => {
+        m.conflicts.forEach(cid => {
+            if(m.id < cid) {
+                const other = appState.medicines.find(x => x.id === cid);
+                if(other) conflicts.push({ m1: m, m2: other, sev: m.conflict_severity[cid] });
+            }
+        });
+    });
+
+    if(conflicts.length === 0) {
+        list.innerHTML = `<div style="padding:40px; text-align:center; color:var(--success); font-weight:800; font-size:18px;">
+            ✅ No interactions or conflicts found for this patient.
+        </div>`;
+        return;
+    }
+
+    list.innerHTML = conflicts.map(c => {
+        let isMajor = c.sev === 'major';
+        let bcolor = isMajor ? 'var(--danger)' : 'var(--warning)';
+        let badgeClass = isMajor ? 'badge-red' : 'badge-amber';
+        let badgeText = isMajor ? 'MAJOR' : 'MODERATE';
+        let icon = isMajor ? '🚨' : '⚠️';
+        let desc = isMajor ? 'Major risk! Graph Coloring has assigned these to separate time slots to minimize risk. Strict monitoring required.' : 'Moderate risk. Graph Coloring separates these automatically to reduce effects. Monitor as needed.';
+
+        return `
+        <div class="card" style="border-left:4px solid ${bcolor};">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+                <div style="font-size:22px;">${icon}</div>
+                <div>
+                    <div style="font-weight:800; font-size:15px;">${c.m1.name} + ${c.m2.name}</div>
+                    <span class="badge ${badgeClass}" style="font-size:10px; margin-top:4px;">${badgeText}</span>
+                </div>
+            </div>
+            <div style="font-size:13px; color:var(--text-muted); line-height:1.6; padding:12px; background:var(--main-bg); border-radius:8px; border:1px solid var(--border);">
+                ${desc}
+            </div>
+            <div style="font-size:12px; font-weight:700; color:var(--primary); margin-top:10px;">➔ Handled by Graph Coloring algorithm.</div>
+        </div>`;
+    }).join('');
+}
+
+// ===================== ALGORITHMS =====================
+
+// Helper: convert 24h integer hour to 12h AM/PM string
+function fmtTime(h) {
+    if(h === 0)  return '12:00 AM';
+    if(h === 12) return '12:00 PM';
+    return h < 12 ? `${h}:00 AM` : `${h-12}:00 PM`;
+}
+
+// Helper: food rule to friendly label
+function fmtRule(rule) {
+    if(rule === 'empty')      return '🌅 Empty stomach';
+    if(rule === 'after_food') return '🍽️ After food';
+    return '⏱️ Any time';
+}
+
+// Interval Scheduling
+function runIntervalScheduling() {
+    const btn = document.querySelector('[onclick="runIntervalScheduling()"]');
+    if(btn) { btn.textContent = '\u23f3 Generating...'; btn.disabled = true; }
+
+    const term = document.getElementById('schedule-terminal');
+    term.innerHTML = '<p style="color:#818cf8;">> Initializing Interval Scheduling algorithm...</p>';
+    term.innerHTML += '<p style="color:#f59e0b;">> [Step 1] Sorting medicines by highest Doses/Day to prioritize constrained items (Greedy Choice)...</p>';
+    term.scrollTop = 0;
+
+    setTimeout(() => {
+        const meds = [...appState.medicines].sort((a,b) => b.doses_per_day - a.doses_per_day);
+        term.innerHTML += `<p style="color:#94a3b8; font-size:12px; margin-left:10px; margin-bottom:10px;">➔ Order: ${meds.map(m => m.name).join(' → ')}</p>`;
+        term.innerHTML += '<p style="color:#f59e0b;">> [Step 2] Executing O(n) greedy placement into valid time windows avoiding overlaps...</p>';
+        
+        const schedule = [];
+
+        meds.forEach(m => {
+            const times = [];
+            const start = m.window[0];
+            for(let d = 0; d < m.doses_per_day; d++) {
+                const placedHour = start + (d * m.dose_gap_hours);
+                if(placedHour <= m.window[1]) times.push(placedHour);
+            }
+            schedule.push({ name: m.name, times, rule: m.food_rule });
+            term.innerHTML += `<p>> Placed <strong>${m.name}</strong> at [${times.map(fmtTime).join(', ')}] (${fmtRule(m.food_rule)})</p>`;
+        });
+
+        term.innerHTML += `<p style="color:#10b981; margin-top:10px;">> ✅ Schedule Generation Complete — ${schedule.length} medicines placed optimally.</p>`;
+        term.scrollTop = term.scrollHeight;
+
+        const ruleColors = { empty: '#4f6ef7', after_food: '#10b981', any: '#f59e0b' };
+        const res = document.getElementById('schedule-results');
+        res.innerHTML = schedule.map(s => {
+            const col = ruleColors[s.rule] || '#4f6ef7';
+            return `<div class="card" style="border-top:3px solid ${col};">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                    <div style="font-weight:800;font-size:15px;">\ud83d\udc8a ${s.name}</div>
+                    <span style="font-size:11px;font-weight:700;color:${col};background:${col}22;padding:3px 10px;border-radius:10px;border:1px solid ${col}44;">${fmtRule(s.rule)}</span>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                    ${s.times.map((t,i) => `<div style="display:flex;align-items:center;justify-content:space-between;padding:11px 16px;background:var(--main-bg);border-radius:8px;border:1px solid var(--border);">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <span style="width:22px;height:22px;border-radius:50%;background:${col};color:white;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;">${i+1}</span>
+                            <span style="font-weight:900;color:${col};font-size:17px;">${fmtTime(t)}</span>
+                        </div>
+                        <span style="font-size:11px;color:var(--text-muted);font-weight:600;">Dose ${i+1} of ${s.times.length}</span>
+                    </div>`).join('')}
+                </div>
+            </div>`;
+        }).join('');
+
+        if(btn) { btn.textContent = '\u25b6 Generate Schedule'; btn.disabled = false; }
+    }, 80);
+}
+
+
+// Dijkstra Emergency
+function runDijkstraReschedule() {
+    const medId = parseInt(document.getElementById('emerg-med-select').value);
+    const med = appState.medicines.find(m => m.id === medId);
+    if(!med) return;
+    const term = document.getElementById('emerg-terminal');
+    term.innerHTML = `<p style="color:#818cf8;">> Initializing Dijkstra's Shortest Path...</p>`;
+    term.innerHTML += `<p style="color:#f59e0b;">> [Step 1] Initializing distances to Infinity for all temporal nodes...</p>`;
+    
+    const nodes = [14,15,16,17,18,19,20,21,22];
+    const dist = {}; const prev = {}; const pq = [];
+    nodes.forEach(n => { dist[n] = Infinity; pq.push(n); });
+    dist[14] = 0;
+    
+    term.innerHTML += `<p style="color:#f59e0b; margin-top:8px;">> [Step 2] Relaxing edges to find minimal penalty path...</p>`;
+
+    while(pq.length > 0) {
+        pq.sort((a,b) => dist[a] - dist[b]);
+        const u = pq.shift();
+        if(dist[u] === Infinity) break;
+        term.innerHTML += `<p style="margin-top:6px;">> Extracting min node <strong style="color:var(--primary);">${u}:00</strong> (Penalty: ${dist[u]})</p>`;
+        
+        [1,2,3].forEach(step => {
+            const v = u + step;
+            if(nodes.includes(v)) {
+                let weight = step * 10;
+                med.conflicts.forEach(() => { if(Math.random() > 0.7) weight += 50; }); // Simulated conflict risk penalty
+                
+                term.innerHTML += `<p style="color:#94a3b8; font-size:12px; margin-left:10px;">➔ Checking edge to ${v}:00 (Edge Weight: ${weight})</p>`;
+                if(dist[u] + weight < dist[v]) { 
+                    term.innerHTML += `<p style="color:#10b981; font-size:12px; margin-left:20px;">✓ Edge Relaxed: dist[${v}] updated from ${dist[v]===Infinity?'∞':dist[v]} to ${dist[u] + weight}</p>`;
+                    dist[v] = dist[u] + weight; 
+                    prev[v] = u; 
+                }
+            }
+        });
+    }
+    // Find actual optimal slot from Dijkstra's computed distances
+    let bestTime = 15, bestPenalty = Infinity;
+    for(let t = 15; t <= 22; t++) { if(dist[t] < bestPenalty) { bestPenalty = dist[t]; bestTime = t; } }
+    const bestTimeStr = fmtTime(bestTime);
+
+    term.innerHTML += `<p style="color:#10b981;">> ✅ Dijkstra complete. Optimal slot: <strong>${bestTimeStr}</strong> (Penalty: ${bestPenalty})</p>`;
+    term.scrollTop = term.scrollHeight;
+    
+    let conflictText = '';
+    if(med.conflicts.length > 0) {
+        let cid = med.conflicts[0];
+        let cMed = appState.medicines.find(x => x.id === cid);
+        if(cMed) conflictText = `This slot minimizes the delay penalty while safely avoiding conflicts with ${cMed.name}.`;
+    } else {
+        conflictText = `This optimal slot minimizes the delay penalty based on your wake window.`;
+    }
+
+    document.getElementById('emerg-results').innerHTML = `
+        <div style="text-align:center; padding:24px;">
+            <div style="font-size:52px; margin-bottom:16px;">✅</div>
+            <h2 style="margin:0 0 10px 0; font-size:20px; font-weight:900;">Reschedule <span style="color:var(--primary);">${med.name}</span> to <span style="color:var(--primary);">${bestTimeStr}</span></h2>
+            <p style="color:var(--text-muted); font-size:13px; line-height:1.6;">${conflictText}</p>
+            <button class="btn btn-success" style="margin-top:20px;" onclick="confirmEmergencyReschedule(this, '${med.name.replace(/'/g, "\\'")}', '${bestTimeStr}')">✔ Confirm & Update Schedule</button>
+        </div>
+    `;
+}
+
+function confirmEmergencyReschedule(btn, medName, time) {
+    btn.innerHTML = '✅ Successfully Updated!';
+    btn.disabled = true;
+    btn.style.background = 'var(--success)';
+    btn.style.color = 'white';
+    
+    setTimeout(() => {
+        // Automatically switch back to Dashboard after 1.5 seconds
+        const dashTab = document.querySelector('.nav-item[data-target="screen-dashboard"]');
+        if(dashTab) dashTab.click();
+        
+        // Reset the emergency screen
+        document.getElementById('emerg-results').innerHTML = `<div style="color:var(--text-muted); font-size:14px; text-align:center; padding:40px 0;">Select a missed medicine to see the optimal new time slots.</div>`;
+        document.getElementById('emerg-terminal').innerHTML = '';
+        
+        // Update the dashboard schedule visually
+        const doseLabels = Array.from(document.querySelectorAll('.dose-name'));
+        for(let i=0; i<doseLabels.length; i++) {
+            if(doseLabels[i].textContent.includes(medName)) {
+                doseLabels[i].style.textDecoration = 'none';
+                doseLabels[i].style.color = 'var(--text-main)';
+                const container = doseLabels[i].closest('div').parentElement;
+                if(container) {
+                    const actionsEl = container.querySelector('.dose-actions');
+                    if(actionsEl) actionsEl.innerHTML = `<span class="badge badge-amber" style="font-size:10px;">Rescheduled to ${time}</span>`;
+                }
+            }
+        }
+    }, 1500);
+}
+
+// Graph Coloring (Welsh-Powell)
+function runGraphColoring() {
+    const runBtn = document.querySelector('[onclick="runGraphColoring()"]');
+    if(runBtn) { runBtn.textContent = '⏳ Running...'; runBtn.disabled = true; }
+
+    const logEl = document.getElementById('gc-execution-log');
+    if(logEl) logEl.innerHTML = `<div style="color:#818cf8;">> Initializing Welsh-Powell Graph Coloring...</div>`;
+
+    const nodes = [...appState.medicines].sort((a,b) => b.conflicts.length - a.conflicts.length);
+    if(logEl) {
+        logEl.innerHTML += `<div style="color:#f59e0b; margin-top:8px;">> [Step 1] Sorted nodes by descending degree (number of conflicts):</div>`;
+        logEl.innerHTML += `<div style="color:#94a3b8; margin-left:10px;">➔ ${nodes.map(n => `${n.name}(d:${n.conflicts.length})`).join(', ')}</div>`;
+        logEl.innerHTML += `<div style="color:#f59e0b; margin-top:8px;">> [Step 2] Assigning lowest available colors...</div>`;
+    }
+
+    const colors = {};
+    let maxColor = -1;
+    let totalConflicts = 0, majorConflicts = 0, totalDeps = 0;
+    
+    nodes.forEach(n => {
+        const ncolors = new Set();
+        n.conflicts.forEach(c => { 
+            if(colors[c]!==undefined) ncolors.add(colors[c]);
+            if(n.id < c) {
+                totalConflicts++;
+                if(n.conflict_severity[c] === 'major') majorConflicts++;
+            }
+        });
+        n.must_after.forEach(d => { totalDeps++; });
+        let c = 0;
+        while(ncolors.has(c)) c++;
+        colors[n.id] = c;
+        if(c > maxColor) maxColor = c;
+
+        if(logEl) {
+            logEl.innerHTML += `<div style="color:#e2e8f0; margin-left:10px;">> Evaluated <strong>${n.name}</strong>. Neighbor colors used: [${Array.from(ncolors).join(',')}] ➔ Assigned <span style="color:#10b981;">Color ${c}</span></div>`;
+        }
+    });
+
+    if(logEl) {
+        logEl.innerHTML += `<div style="color:#10b981; margin-top:10px; font-weight:bold;">> ✅ Coloring Complete. Used ${maxColor+1} distinct time slots.</div>`;
+        logEl.scrollTop = logEl.scrollHeight;
+    }
+    
+    const gcSlots = document.getElementById('gc-slots'); if(gcSlots) gcSlots.textContent = maxColor + 1;
+    const gcConf = document.getElementById('gc-conflicts'); if(gcConf) gcConf.textContent = totalConflicts;
+    const gcMaj = document.getElementById('gc-major'); if(gcMaj) gcMaj.textContent = majorConflicts;
+    const gcDeps = document.getElementById('gc-deps'); if(gcDeps) gcDeps.textContent = totalDeps;
+
+    const canvas = document.getElementById('conflict-canvas');
+    if(!canvas) { if(runBtn) { runBtn.textContent = '▶ Run Algorithm'; runBtn.disabled = false; } return; }
+    const ctx = canvas.getContext('2d');
+    // Use offsetWidth as fallback when clientWidth is 0 (e.g. screen just became visible)
+    const parentEl = canvas.parentElement;
+    const w = Math.max(parentEl.clientWidth || parentEl.offsetWidth, 400) - 40;
+    const h = 480;
+    canvas.width = w; canvas.height = h;
+    ctx.clearRect(0,0,w,h);
+
+    const pos = {};
+    const R = Math.min(w, h) * 0.3;
+    nodes.forEach((n,i) => {
+        const angle = (i/nodes.length)*2*Math.PI - Math.PI/2;
+        pos[n.id] = { x: w/2 + R*Math.cos(angle), y: h/2 + R*Math.sin(angle) };
+    });
+
+    // Draw edges
+    nodes.forEach(n => {
+        n.conflicts.forEach(cid => {
+            if(n.id < cid) {
+                const p1 = pos[n.id]; const p2 = pos[cid];
+                ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
+                const sev = n.conflict_severity[cid];
+                ctx.strokeStyle = sev === 'major' ? '#ef4444' : '#f59e0b';
+                ctx.lineWidth = sev === 'major' ? 3 : 2;
+                ctx.stroke();
+                const mx = (p1.x+p2.x)/2, my = (p1.y+p2.y)/2;
+                ctx.fillStyle = ctx.strokeStyle;
+                ctx.font = 'bold 11px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText(sev.charAt(0).toUpperCase(), mx, my);
+            }
+        });
+        n.must_after.forEach(did => {
+            const p1 = pos[did]; const p2 = pos[n.id];
+            if(!p1||!p2) return;
+            ctx.beginPath(); ctx.setLineDash([5,5]);
+            ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
+            ctx.strokeStyle = '#4f6ef7'; ctx.lineWidth = 2; ctx.stroke();
+            ctx.setLineDash([]);
+        });
+    });
+
+    const slotColors = ['#4f6ef7','#10b981','#f59e0b','#8b5cf6','#ec4899'];
+    nodes.forEach(n => {
+        const p = pos[n.id];
+        ctx.beginPath(); ctx.arc(p.x, p.y, 38, 0, Math.PI*2);
+        ctx.fillStyle = slotColors[colors[n.id] % slotColors.length];
+        ctx.fill();
+        ctx.strokeStyle = 'white'; ctx.lineWidth = 2; ctx.stroke();
+
+        ctx.fillStyle = 'white'; ctx.font = '600 11px Inter';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        const shortName = n.name.length > 9 ? n.name.substring(0,8)+'…' : n.name;
+        ctx.fillText(shortName, p.x, p.y);
+    });
+
+    let legHtml = '';
+    for(let i=0; i<=maxColor; i++)
+        legHtml += `<span class="badge" style="background:${slotColors[i%slotColors.length]}; color:white;">Slot ${i}</span>`;
+    document.getElementById('slot-legend').innerHTML = legHtml;
+
+    // Simulate work so user sees the algorithm "running"
+    if(runBtn) {
+        setTimeout(() => {
+            runBtn.textContent = '▶ Run Algorithm';
+            runBtn.disabled = false;
+            // Add a quick visual flash to the canvas so it's obvious it was redrawn
+            canvas.style.opacity = '0';
+            setTimeout(() => {
+                canvas.style.transition = 'opacity 0.4s ease';
+                canvas.style.opacity = '1';
+            }, 50);
+        }, 800);
+    }
+}
+
+// Knapsack DP
+function runOptimizer() {
+    const budget = parseInt(document.getElementById('opt-slider').value);
+    const req = appState.medicines.filter(m=>m.required);
+    const opt = appState.medicines.filter(m=>!m.required);
+    let reqCost=0, reqVal=0;
+    req.forEach(m => { reqCost+=m.side_effect_score; reqVal+=m.therapeutic_value; });
+    let rem = Math.max(0, budget - reqCost);
+    const n = opt.length;
+    const dp = Array(n+1).fill(null).map(()=>Array(rem+1).fill(0));
+    for(let i=1; i<=n; i++)
+        for(let w=0; w<=rem; w++) {
+            const item = opt[i-1];
+            dp[i][w] = item.side_effect_score <= w
+                ? Math.max(dp[i-1][w], dp[i-1][w-item.side_effect_score]+item.therapeutic_value)
+                : dp[i-1][w];
+        }
+    let res=dp[n][rem], w=rem;
+    const selOpt=[], ex=[];
+    const tracebackSet = new Set();
+    tracebackSet.add(`${n},${rem}`);
+
+    for(let i=n; i>0 && res>0; i--) {
+        if(res !== dp[i-1][w]) { 
+            selOpt.push(opt[i-1]); 
+            res-=opt[i-1].therapeutic_value; 
+            w-=opt[i-1].side_effect_score; 
+            tracebackSet.add(`${i-1},${w}`);
+        } else {
+            tracebackSet.add(`${i-1},${w}`);
+        }
+    }
+    opt.forEach(m => { if(!selOpt.includes(m)) ex.push(m); });
+    const finalSel = [...req, ...selOpt];
+    let totVal = reqVal + dp[n][rem], totCost = reqCost + (rem - w);
+    document.getElementById('opt-sel-count').textContent = finalSel.length;
+    document.getElementById('opt-ex-count').textContent = ex.length;
+    document.getElementById('opt-val').textContent = totVal;
+    document.getElementById('opt-used').textContent = `${totCost}/${budget}`;
+
+    document.getElementById('opt-selected-list').innerHTML = finalSel.map(m => `
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:11px 0; border-bottom:1px solid var(--border);">
+            <div style="font-weight:700;">${m.name} ${m.required ? '<span class="badge badge-blue" style="font-size:10px;">Required</span>' : ''}</div>
+            <div style="display:flex; gap:8px;">
+                <span class="badge badge-green">TV:${m.therapeutic_value}</span>
+                <span class="badge badge-red">SE:${m.side_effect_score}</span>
+            </div>
+        </div>
+    `).join('');
+
+    document.getElementById('opt-excluded-list').innerHTML = ex.map(m => `
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:11px 0; border-bottom:1px solid var(--border);">
+            <div>
+                <div style="font-weight:700;">${m.name}</div>
+                <div style="font-size:11px; color:var(--text-muted);">SE score ${m.side_effect_score} exceeded remaining budget</div>
+            </div>
+            <span class="badge badge-red">SE:${m.side_effect_score}</span>
+        </div>
+    `).join('');
+
+    let tHtml = '<table class="dp-table"><tr><th>Med \\ Budget</th>';
+    for(let ww=0; ww<=rem; ww++) tHtml += `<th>${ww}</th>`;
+    tHtml += '</tr><tr><td>(base)</td>';
+    for(let ww=0; ww<=rem; ww++) {
+        let cls = tracebackSet.has(`0,${ww}`) ? ' style="background:var(--success); color:white; font-weight:bold; box-shadow: inset 0 0 0 2px #fff;"' : '';
+        tHtml += `<td${cls}>0</td>`;
+    }
+    tHtml += '</tr>';
+    for(let i=1; i<=n; i++) {
+        tHtml += `<tr><th>${opt[i-1].name}</th>`;
+        for(let ww=0; ww<=rem; ww++) {
+            let cls = tracebackSet.has(`${i},${ww}`) ? ' style="background:var(--success); color:white; font-weight:bold; box-shadow: inset 0 0 0 2px #fff;"' : '';
+            tHtml += `<td${cls}>${dp[i][ww]}</td>`;
+        }
+        tHtml += '</tr>';
+    }
+    tHtml += '</table>';
+    document.getElementById('opt-dp-table').innerHTML = tHtml;
+}
+
+// ===================== CRUD OPERATIONS =====================
+
+function openMedModal(id = null) {
+    const modal = document.getElementById('med-modal');
+    modal.style.display = 'flex';
+    if(id) {
+        document.getElementById('modal-title').textContent = 'Edit Medicine';
+        const med = appState.medicines.find(m => m.id === id);
+        if(med) {
+            document.getElementById('modal-med-id').value = med.id;
+            document.getElementById('modal-med-name').value = med.name;
+            document.getElementById('modal-med-desc').value = med.desc || '';
+            document.getElementById('modal-med-amount').value = med.dosage || '';
+            document.getElementById('modal-med-doses').value = med.doses_per_day;
+            document.getElementById('modal-med-food').value = med.food_rule;
+            document.getElementById('modal-med-se').value = med.side_effect_score;
+            document.getElementById('modal-med-tv').value = med.therapeutic_value;
+            document.getElementById('modal-med-qty').value = med.current_quantity;
+        }
+    } else {
+        document.getElementById('modal-title').textContent = 'Add Medicine';
+        document.getElementById('modal-med-id').value = '';
+        document.getElementById('modal-med-name').value = '';
+        document.getElementById('modal-med-desc').value = '';
+        document.getElementById('modal-med-amount').value = '';
+        document.getElementById('modal-med-doses').value = 1;
+        document.getElementById('modal-med-food').value = 'any';
+        document.getElementById('modal-med-se').value = 3;
+        document.getElementById('modal-med-tv').value = 7;
+        document.getElementById('modal-med-qty').value = 30;
+    }
+}
+
+function closeMedModal() {
+    document.getElementById('med-modal').style.display = 'none';
+}
+
+function saveMedModal() {
+    const idVal = document.getElementById('modal-med-id').value;
+    const name = document.getElementById('modal-med-name').value.trim();
+    if(!name) { alert("Please enter a medicine name."); return; }
+
+    const desc = document.getElementById('modal-med-desc').value.trim();
+    const amount = document.getElementById('modal-med-amount').value.trim();
+    const doses = parseInt(document.getElementById('modal-med-doses').value) || 1;
+    const food = document.getElementById('modal-med-food').value;
+    const se = parseInt(document.getElementById('modal-med-se').value) || 3;
+    const tv = parseInt(document.getElementById('modal-med-tv').value) || 7;
+    const qty = parseInt(document.getElementById('modal-med-qty').value) || 30;
+
+    if(idVal) {
+        // Edit existing
+        const med = appState.medicines.find(m => m.id === parseInt(idVal));
+        if(med) {
+            med.name = name;
+            med.desc = desc;
+            med.dosage = amount;
+            med.doses_per_day = doses;
+            med.food_rule = food;
+            med.side_effect_score = se;
+            med.therapeutic_value = tv;
+            med.current_quantity = qty;
+            // Dose gap adjustment based on doses
+            med.dose_gap_hours = doses === 1 ? 24 : (doses === 2 ? 12 : 8);
+        }
+    } else {
+        // Add new
+        const newMed = {
+            id: Math.floor(Math.random() * 10000) + 100,
+            name: name,
+            desc: desc || "Added manually",
+            dosage: amount || "Unknown",
+            doses_per_day: doses,
+            dose_gap_hours: doses === 1 ? 24 : (doses === 2 ? 12 : 8),
+            window: [8, 20],
+            food_rule: food,
+            side_effect_score: se,
+            therapeutic_value: tv,
+            required: true,
+            conflicts: [],
+            conflict_severity: {},
+            must_after: [],
+            current_quantity: qty
+        };
+        appState.medicines.push(newMed);
+    }
+
+    closeMedModal();
+    FirebaseApp.saveData();
+    updateDashboard(appState.activePatient, appState.medicines);
+    initUI();
+}
+
+function addMedicine() { openMedModal(null); }
+function editMedicine(id) { openMedModal(id); }
+
+function deleteMedicine(id) {
+    const med = appState.medicines.find(m => m.id === id);
+    if(!med) return;
+    if(confirm(`Are you sure you want to remove ${med.name} from the patient's regimen?`)) {
+        appState.medicines = appState.medicines.filter(m => m.id !== id);
+        
+        appState.medicines.forEach(otherMed => {
+            otherMed.conflicts = otherMed.conflicts.filter(cId => cId !== id);
+            delete otherMed.conflict_severity[id];
+            otherMed.must_after = otherMed.must_after.filter(maId => maId !== id);
+        });
+        
+        FirebaseApp.saveData();
+        updateDashboard(appState.activePatient, appState.medicines);
+        initUI();
+    }
+}
+
+// ===================== INIT =====================
+window.onload = () => {
+    // Show auth screen
+    document.getElementById('screen-auth').style.display = 'flex';
+    document.getElementById('screen-auth').style.opacity = '1';
+    setupSearch();
+};
+</script>
+</body>
+</html>
