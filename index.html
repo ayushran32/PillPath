@@ -633,6 +633,10 @@
         /* Default: simple row hidden in clinical mode */
         .med-simple-row { display: none; }
 
+        #mobile-top-bar {
+            display: none;
+        }
+
         /* ===================== MOBILE RESPONSIVENESS ===================== */
         @media (max-width: 768px) {
             body {
@@ -653,7 +657,7 @@
             #sidebar.mobile-open {
                 left: 0 !important;
             }
-            #mobile-top-bar {
+            body.logged-in #mobile-top-bar {
                 display: flex !important;
             }
             #sidebar-overlay.mobile-open {
@@ -1294,6 +1298,41 @@
     </div><!-- end #main-content -->
 
 <script>
+// Global Error Catcher for Debugging
+window.onerror = function(message, source, lineno, colno, error) {
+    const debugDiv = document.createElement('div');
+    debugDiv.style.position = 'fixed';
+    debugDiv.style.top = '0';
+    debugDiv.style.left = '0';
+    debugDiv.style.width = '100%';
+    debugDiv.style.background = '#ef4444';
+    debugDiv.style.color = '#ffffff';
+    debugDiv.style.padding = '20px';
+    debugDiv.style.zIndex = '99999';
+    debugDiv.style.fontFamily = 'monospace';
+    debugDiv.style.fontSize = '14px';
+    debugDiv.style.whiteSpace = 'pre-wrap';
+    debugDiv.innerHTML = `<strong>JavaScript Error:</strong><br>${message}<br>Source: ${source}<br>Line: ${lineno}:${colno}`;
+    document.body.appendChild(debugDiv);
+    return false;
+};
+window.addEventListener('unhandledrejection', function(event) {
+    const debugDiv = document.createElement('div');
+    debugDiv.style.position = 'fixed';
+    debugDiv.style.top = '0';
+    debugDiv.style.left = '0';
+    debugDiv.style.width = '100%';
+    debugDiv.style.background = '#f59e0b';
+    debugDiv.style.color = '#ffffff';
+    debugDiv.style.padding = '20px';
+    debugDiv.style.zIndex = '99999';
+    debugDiv.style.fontFamily = 'monospace';
+    debugDiv.style.fontSize = '14px';
+    debugDiv.style.whiteSpace = 'pre-wrap';
+    debugDiv.innerHTML = `<strong>Unhandled Rejection:</strong><br>${event.reason}`;
+    document.body.appendChild(debugDiv);
+});
+
 // ===================== MEDICINE DATABASE =====================
 // 40+ real medicines with clinical data, known conflicts, dosing rules
 const MEDICINE_DATABASE = [
@@ -1486,6 +1525,7 @@ const FirebaseApp = {
         document.getElementById('sidebar').style.display = 'flex';
         document.getElementById('main-content').style.display = 'flex';
         document.getElementById('mobile-top-bar').style.display = '';
+        document.body.classList.add('logged-in');
 
         if(role === 'doctor') {
             const doc = this.db.doctors['DOC-101'];
@@ -2335,6 +2375,7 @@ function doLogout() {
     document.getElementById('sidebar').style.display = 'none';
     document.getElementById('main-content').style.display = 'none';
     document.getElementById('mobile-top-bar').style.display = 'none';
+    document.body.classList.remove('logged-in');
 
     // Reset sidebar cards
     document.getElementById('user-card-doctor').style.display = 'none';
