@@ -11,12 +11,15 @@ PillPath solves this by applying classical computer science algorithms from **De
 
 The core logic of PillPath is powered by 5 distinct algorithms, each solving a specific healthcare constraint.
 
-### A. Graph Coloring Algorithm (Welsh-Powell)
+#### A. Graph Coloring Algorithm (Welsh-Powell)
 * **Application**: Drug Interaction & Conflict Resolution.
 * **How it works**: When a patient is prescribed multiple drugs, some combinations can cause severe adverse reactions. The system models the patient's prescription as an undirected graph.
     * **Nodes**: Represent the prescribed medicines.
     * **Edges**: Represent a dangerous interaction between two medicines.
-* **Execution**: The Welsh-Powell algorithm sorts the medicines by their degree of conflict (number of edges). It then assigns "colors" (which represent distinct time slots) to each node. If two medicines share an edge, they are forced into different colors. This mathematically guarantees that conflicting drugs are scheduled far apart from each other.
+* **Execution**: The Welsh-Powell algorithm sorts the medicines by their degree of conflict (number of edges). It then assigns "colors" (which represent distinct time slots) to each node. If two medicines share an edge, they are forced into different colors. 
+* **Real-world Clinical Upgrade**:
+  * **Undirected Bidirectional Consistency**: The algorithm is upgraded to enforce strict undirected consistency by automatically mapping conflicts bidirectionally (e.g. if drug A conflicts with drug B, the link is established in both directions). This resolves data-integrity issues in prescribing databases where conflicts are entered asymmetrically.
+  * **Heuristic vs. Exact Optimal Comparison**: The interface includes a side-by-side comparison cards panel comparing the Greedy Welsh-Powell color count against a **Backtracking Chromatic Solver** (exact optimal brute-force), highlighting key DAA optimization trade-offs.
 
 ### B. 0/1 Knapsack Problem (Dynamic Programming)
 * **Application**: Prescription Optimization & Side-Effect Budgeting.
@@ -24,19 +27,25 @@ The core logic of PillPath is powered by 5 distinct algorithms, each solving a s
     * **Weight**: The "Side Effect Score" of a medicine.
     * **Value**: The "Therapeutic Value" of a medicine.
     * **Capacity**: The patient's maximum tolerable side-effect limit (the "Budget").
-* **Execution**: The system uses a 2D Dynamic Programming matrix to find the exact combination of optional medicines that maximizes the total therapeutic value without exceeding the patient's side-effect budget. 
+* **Execution**: The system uses a 2D Dynamic Programming matrix to find the exact combination of optional medicines that maximizes the total therapeutic value without exceeding the patient's side-effect budget.
+* **Real-world Clinical Upgrade**:
+  * **Physician Budget Alerts**: If the mandatory (Required) medication side effects alone exceed the doctor's selected budget, the system triggers a high-visibility Clinical Alert Banner.
+  * **Interactive Required Checks**: The Add/Edit Modal includes a checkbox allowing physicians to toggle whether a medication is "Required" (mandatory) or "Optional". Optional medications are dynamically optimized by the Knapsack DP, and the **Traceback Path** in the DP table is highlighted in a continuous green path all the way back to the base case (0,0).
 
 ### C. Interval Scheduling (Greedy Approach)
-* **Application**: Daily Schedule Generation.
+* **Application**: Daily Schedule Generator.
 * **How it works**: Medicines have strict temporal constraints, such as requiring an "Empty Stomach" or needing a "12-hour gap" between doses.
-* **Execution**: The greedy algorithm sorts the medicines by priority (most constrained first, e.g., drugs requiring 3 doses a day). It then iterates through the patient's "wake window" (e.g., 7:00 AM to 10:00 PM) and greedily assigns the medication to the earliest valid time slot that satisfies all food and gap constraints, ensuring no overlaps.
+* **Execution**: The greedy algorithm sorts the medicines by priority (most constrained first, e.g., drugs requiring 3 doses a day). It then assigns the medication to the earliest valid time slot that satisfies all food and gap constraints, ensuring no overlaps.
 
 ### D. Dijkstra's Algorithm (Shortest Path)
 * **Application**: Emergency Rescheduling for Missed Doses.
 * **How it works**: If a patient misses a dose, arbitrarily taking it later can inadvertently trigger a drug interaction with a different scheduled medicine. 
 * **Execution**: The system treats future time slots as nodes in a graph. The algorithm calculates the "edge weights" (penalties) for moving the dose to a future slot. The weight increases based on the time delay, but it adds a massive penalty if that future slot already contains a conflicting medicine. Dijkstra's algorithm finds the "shortest path" (the lowest penalty time slot) to safely recover the missed dose.
+* **Real-world Clinical Upgrade**:
+  * **Real Overlap Conflict Checking**: The simulated random weight check has been replaced with a real-time temporal overlap scanner against all other medications in the patient's schedule, including previously rescheduled doses.
+  * **Live Pathfinding Visualization**: Built an interactive HTML5 Canvas drawing the Dijkstra search space: nodes (blue for start, red for conflicts, gray for unvisited, green for optimal), edges (curves colored by weights), and a thick **neon green quadratic curve** showing the shortest path found.
 
-### E. Edit Distance (Levenshtein) & Boyer-Moore
+### E. Edit Distance (Levenshtein) & Boyer-Moore Heuristic
 * **Application**: Medical Database Search.
 * **How it works**: Medical names are notoriously difficult to spell (e.g., *Hydrochlorothiazide*, *Levetiracetam*).
 * **Execution**: When a doctor searches for a medicine to add to a prescription, the system uses string-matching heuristics and Edit Distance to provide lightning-fast, typo-tolerant search results, ensuring they find the correct drug even with spelling mistakes.
@@ -54,8 +63,8 @@ The system is split into two distinct, role-based interfaces sharing a centraliz
 * **Conflict Analysis**: View the dynamic Welsh-Powell graph to visually understand exactly why certain medications cannot be taken together.
 
 ### 👤 Patient Portal
-* **Simplified Dashboard**: A clean, accessible view of "Today's Schedule" focusing strictly on what to take and when.
-* **Adherence Tracking**: Patients can mark doses as "Taken" (✅) or "Missed" (❌), which dynamically updates their global Adherence Score for the doctor to review.
+* **Dashboard Daily Log**: A scrollable schedule listing all today's doses, allowing patients to check off doses as Taken (✅) or Missed (❌).
+* **Adherence Dashboard**: Displays a smooth **HTML5 Canvas Line Chart** showing compliance trend lines over 7 days, a weekly calendar grid check list, and a detailed intake logs history feed.
 * **Emergency Rescheduler**: If a dose is missed, patients can trigger Dijkstra's algorithm to instantly receive a newly calculated, safe time slot for the missed pill.
 * **Visual Cues**: Clear badging for requirements like "Empty Stomach" or "After Food".
 

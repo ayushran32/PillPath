@@ -633,6 +633,70 @@
         /* Default: simple row hidden in clinical mode */
         .med-simple-row { display: none; }
 
+        /* ===================== MOBILE RESPONSIVENESS ===================== */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+                height: 100vh;
+                overflow: hidden;
+            }
+            #sidebar {
+                position: fixed;
+                left: -268px;
+                top: 0;
+                bottom: 0;
+                z-index: 1000;
+                transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                height: 100%;
+                box-shadow: 10px 0 30px rgba(0,0,0,0.3);
+            }
+            #sidebar.mobile-open {
+                left: 0 !important;
+            }
+            #mobile-top-bar {
+                display: flex !important;
+            }
+            #sidebar-overlay.mobile-open {
+                display: block !important;
+            }
+            #main-content {
+                padding: 16px !important;
+                height: calc(100vh - 60px) !important;
+            }
+            .grid-2 {
+                grid-template-columns: 1fr !important;
+            }
+            .grid-summary {
+                display: grid !important;
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 12px !important;
+                margin-bottom: 20px !important;
+            }
+            .header {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 12px !important;
+                margin-bottom: 20px !important;
+            }
+            .header button, .header .btn {
+                width: 100% !important;
+            }
+            .modal-overlay {
+                padding: 10px 0 !important;
+            }
+            .modal-overlay .card {
+                width: 95% !important;
+                padding: 20px !important;
+            }
+            #conflict-canvas, #emerg-canvas {
+                width: 100% !important;
+                height: auto !important;
+                max-height: 380px !important;
+            }
+            #sidebar-close-btn {
+                display: block !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -756,15 +820,28 @@
         </div>
     </div>
 
+    <!-- Mobile Top Bar and Sidebar Overlay -->
+    <div id="mobile-top-bar" style="display:none; width: 100%; height: 60px; background: var(--sidebar-bg); color: white; align-items: center; padding: 0 16px; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.06); flex-shrink: 0; z-index: 99;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <button id="mobile-menu-btn" style="background: none; border: none; color: white; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px;" onclick="toggleMobileMenu(true)">☰</button>
+            <span style="font-weight: 800; font-size: 16px; letter-spacing: -0.3px;">PillPath</span>
+        </div>
+        <div id="mobile-user-avatar" style="width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #4f6ef7, #8b5cf6); color: white; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800;">👨‍⚕️</div>
+    </div>
+    <div id="sidebar-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 999;" onclick="toggleMobileMenu(false)"></div>
+
     <!-- ===================== SIDEBAR ===================== -->
     <div id="sidebar" style="display:none;">
         <!-- Brand -->
-        <div class="brand">
-            <div class="brand-icon">💊</div>
-            <div class="brand-text">
-                <div class="brand-name">PillPath</div>
-                <div class="brand-sub">Smart Medication</div>
+        <div class="brand" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div class="brand-icon">💊</div>
+                <div class="brand-text">
+                    <div class="brand-name">PillPath</div>
+                    <div class="brand-sub">Smart Medication</div>
+                </div>
             </div>
+            <button id="sidebar-close-btn" style="background: none; border: none; color: #94a3b8; font-size: 20px; cursor: pointer; display: none;" onclick="toggleMobileMenu(false)">✕</button>
         </div>
 
         <!-- ── DOCTOR sidebar user card ── -->
@@ -859,6 +936,7 @@
                 <div class="hero-card-content">
                     <div class="hero-greeting" id="dash-greeting">🌅 Good Morning</div>
                     <div class="hero-name" id="dash-patient-name">Loading...</div>
+                    <div id="dash-date" class="hero-date"></div>
                     <div style="display:flex; align-items:center; gap:8px; margin:6px 0 16px; flex-wrap:wrap;">
                         <span id="dash-diagnosis-chip" style="font-size:12px; font-weight:700; background:rgba(255,255,255,0.15); color:white; padding:4px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.25);">Loading...</span>
                         <span id="dash-last-visit" style="font-size:12px; color:rgba(255,255,255,0.6);">Last visit: —</span>
@@ -900,11 +978,11 @@
                 <!-- Today's schedule -->
                 <div class="card">
                     <h3 style="font-size: 14px; font-weight: 800; display: flex; align-items: center; gap: 8px; margin-bottom: 18px;">📋 Today's Schedule</h3>
-                    <div id="dash-schedule-list" style="display: flex; flex-direction: column; gap: 0;">
+                    <div id="dash-schedule-list" style="display: flex; flex-direction: column; gap: 0; max-height: 290px; overflow-y: auto; padding-right: 4px;">
                         <!-- Populated by JS -->
                     </div>
                     <div id="dash-schedule-more" style="font-size:12px; color:var(--text-light); margin:10px 0 14px; display:none;"></div>
-                    <button class="btn btn-primary" onclick="document.querySelector('[data-target=screen-schedule]').click()">View Full Schedule →</button>
+                    <button class="btn btn-primary" style="margin-top: 10px;" onclick="document.querySelector('[data-target=screen-schedule]').click()">View Full Schedule →</button>
                 </div>
 
                 <!-- Warnings -->
@@ -1005,6 +1083,8 @@
                     <p>0/1 Knapsack DP — maximize therapeutic benefit within your side-effect tolerance budget</p>
                 </div>
             </div>
+            <!-- Clinical Warning Alert if required meds exceed budget -->
+            <div id="opt-budget-warning" class="alert-danger" style="display:none; margin-bottom:20px; padding:14px 16px; border-left:4px solid var(--danger); border-radius:10px;"></div>
             <div class="card" style="margin-bottom: 24px;">
                 <div style="font-size:14px; font-weight:800; margin-bottom:16px;">⚙️ Side-Effect Budget Control</div>
                 <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-muted); font-weight:700; text-transform:uppercase; margin-bottom:10px; letter-spacing:0.5px;">
@@ -1071,9 +1151,13 @@
                 <div class="card" id="emerg-results">
                     <div style="color:var(--text-muted); font-size:14px; text-align:center; padding:40px 0;">Select a missed medicine to see the optimal new time slots.</div>
                 </div>
-                <div class="card" style="background:var(--sidebar-bg); color:white;">
-                    <h3 style="color:white; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:12px; margin-bottom:14px; font-size:14px;">Penalty Graph (Dijkstra)</h3>
-                    <div id="emerg-terminal" class="terminal" style="background:transparent; border:none; color:#60a5fa; height:280px;"></div>
+                <div class="card" style="background:var(--sidebar-bg); color:white; padding:20px; display:flex; flex-direction:column; height:370px;">
+                    <h3 style="color:white; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px; margin-bottom:10px; font-size:14px; display:flex; justify-content:space-between; align-items:center;">
+                        <span>🚨 Dijkstra Path & Penalty Graph</span>
+                        <span style="font-size:9px; background:var(--primary); padding:1px 6px; border-radius:10px; font-weight:700;">LIVE VISUALIZATION</span>
+                    </h3>
+                    <canvas id="emerg-canvas" style="display:block; width:100%; height:160px; background:rgba(0,0,0,0.3); border-radius:10px; border:1px solid rgba(255,255,255,0.08);"></canvas>
+                    <div id="emerg-terminal" class="terminal" style="background:transparent; border:none; color:#60a5fa; height:120px; font-size:11px; padding:0; overflow-y:auto; flex:1;"></div>
                 </div>
             </div>
         </div>
@@ -1091,70 +1175,118 @@
                 <div class="card summary-card"><div class="s-icon">📅</div><div id="adh-days" class="s-val">28</div><div class="s-lbl">Days Tracked</div></div>
                 <div class="card summary-card"><div class="s-icon" style="color:var(--danger);">❌</div><div id="adh-missed" class="s-val" style="color:var(--danger);">3</div><div class="s-lbl">Missed Doses</div></div>
             </div>
-            <div class="card" style="text-align:center; padding:50px;">
-                <div style="font-size:64px; margin-bottom:16px;">📈</div>
-                <h2 id="adh-big-score" style="font-size:28px; font-weight:900; margin-bottom:8px;">94% Adherence Score</h2>
-                <p id="adh-msg" style="color:var(--text-muted); font-size:15px;">Patient is highly compliant with the generated schedule.</p>
-                <div id="adh-badge" style="display:inline-block; margin-top:24px; padding:14px 32px; background:var(--success-bg); border:1px solid #bbf7d0; border-radius:12px; color:var(--success); font-weight:700;">
-                    🌟 Excellent Compliance — Keep it up!
+            <div class="grid-2">
+                <!-- Compliance Trend Graph Card -->
+                <div class="card" style="padding:24px; display:flex; flex-direction:column; justify-content:center;">
+                    <div style="font-weight:800; text-align:left; margin-bottom:14px; display:flex; align-items:center; gap:6px;">📈 Compliance Trend (Past 7 Days)</div>
+                    <canvas id="adh-chart" style="width:100%; height:180px; margin-bottom:15px;"></canvas>
+                    <h2 id="adh-big-score" style="font-size:24px; font-weight:900; margin-bottom:6px; margin-top:10px; text-align:center;">94% Adherence Score</h2>
+                    <p id="adh-msg" style="color:var(--text-muted); font-size:13px; line-height:1.5; text-align:center;">Patient is highly compliant with the generated schedule.</p>
+                    <div style="margin-top:14px; text-align:center;">
+                        <div id="adh-badge" style="display:inline-block; padding:8px 20px; background:var(--success-bg); border:1px solid #bbf7d0; border-radius:8px; color:var(--success); font-weight:700; font-size:12px;">
+                            🌟 Excellent Compliance — Keep it up!
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 7-Day Compliance Status & Detailed Intake Feed Card -->
+                <div class="card" style="padding:24px;">
+                    <div style="font-weight:800; margin-bottom:16px; display:flex; align-items:center; gap:6px;">🗓️ 7-Day Compliance Grid</div>
+                    <div style="display:grid; grid-template-columns: repeat(7, 1fr); gap:8px; margin-bottom:24px; text-align:center;" id="adh-calendar-grid">
+                        <!-- Populated by JS -->
+                    </div>
+                    
+                    <div style="font-weight:800; margin-bottom:12px; display:flex; align-items:center; gap:6px; border-top: 1px solid var(--border); padding-top:18px;">📋 Dose Intake History (Today)</div>
+                    <div id="adh-dose-feed" style="max-height:180px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding-right:4px;">
+                        <!-- Populated by JS -->
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Medicine Modal -->
-        <div id="med-modal" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
-            <div class="card" style="width:500px; max-width:90%; padding:30px; animation: slideIn 0.3s ease;">
-                <h2 id="modal-title" style="margin-top:0; margin-bottom:20px; font-weight:800;">Add Medicine</h2>
+        <div id="med-modal" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center; overflow-y:auto; padding:20px 0;">
+            <div class="card" style="width:560px; max-width:95%; padding:30px; animation: slideIn 0.3s ease; margin:auto; position:relative;">
+                <h2 id="modal-title" style="margin-top:0; margin-bottom:6px; font-weight:800;">Add Medicine</h2>
+                <p style="color:var(--text-muted); font-size:12px; margin-bottom:20px;">Search our database of 40+ drugs — fields auto-fill instantly.</p>
                 <input type="hidden" id="modal-med-id">
-                
-                <div style="margin-bottom:15px;">
-                    <label style="display:block; font-size:12px; font-weight:700; color:var(--text-muted); margin-bottom:5px;">Medicine Name</label>
-                    <input type="text" id="modal-med-name" class="modal-input" placeholder="e.g. Lisinopril">
-                </div>
-                
-                <div style="margin-bottom:15px;">
-                    <label style="display:block; font-size:12px; font-weight:700; color:var(--text-muted); margin-bottom:5px;">Description</label>
-                    <input type="text" id="modal-med-desc" class="modal-input" placeholder="Brief description...">
-                </div>
 
-                <div style="margin-bottom:15px;">
-                    <label style="display:block; font-size:12px; font-weight:700; color:var(--text-muted); margin-bottom:5px;">Dosage Amount (e.g., 50mg, 1 tablet)</label>
-                    <input type="text" id="modal-med-amount" class="modal-input" placeholder="e.g. 50mg">
-                </div>
-
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
-                    <div>
-                        <label style="display:block; font-size:12px; font-weight:700; color:var(--text-muted); margin-bottom:5px;">Doses per Day</label>
-                        <input type="number" id="modal-med-doses" class="modal-input" value="1" min="1" max="4">
+                <!-- ── DATABASE SEARCH ── -->
+                <div id="db-search-section" style="margin-bottom:18px; padding:16px; background:linear-gradient(135deg,rgba(79,110,247,0.06),rgba(139,92,246,0.04)); border:1.5px solid rgba(79,110,247,0.25); border-radius:12px;">
+                    <label style="display:block; font-size:11px; font-weight:800; color:var(--primary); margin-bottom:8px; text-transform:uppercase; letter-spacing:1px;">🗄️ Medicine Database</label>
+                    <div style="position:relative;">
+                        <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:15px;">🔍</span>
+                        <input type="text" id="db-search-input" class="modal-input" placeholder="Search 40+ drugs — e.g. Atorvastatin, Ciprofloxacin..." style="padding-left:38px;" oninput="onDBSearch(this.value)" autocomplete="off">
+                        <div id="db-dropdown" style="display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; background:white; border:1.5px solid var(--border); border-radius:10px; box-shadow:0 8px 32px rgba(0,0,0,0.14); z-index:100; max-height:220px; overflow-y:auto;"></div>
                     </div>
-                    <div>
-                        <label style="display:block; font-size:12px; font-weight:700; color:var(--text-muted); margin-bottom:5px;">Food Rule</label>
-                        <select id="modal-med-food" class="modal-input">
-                            <option value="any">Any Time</option>
-                            <option value="after_food">After Food</option>
-                            <option value="empty">Empty Stomach</option>
-                        </select>
+                    <div id="db-selected-badge" style="display:none; margin-top:10px; padding:8px 12px; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); border-radius:8px; font-size:12px; font-weight:700; color:var(--success); display:none; align-items:center; gap:8px;">
+                        <span>✅</span><span id="db-badge-text">Loaded from database</span>
+                        <button onclick="clearDBSelection()" style="margin-left:auto; background:none; border:none; cursor:pointer; color:var(--text-muted); font-size:13px;">✕ Clear</button>
                     </div>
                 </div>
 
-                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:15px; margin-bottom:25px;">
-                    <div>
-                        <label style="display:block; font-size:12px; font-weight:700; color:var(--text-muted); margin-bottom:5px;">Side Effect Score</label>
-                        <input type="number" id="modal-med-se" class="modal-input" value="3" min="1" max="10">
+                <!-- ── CONFLICT WARNING ── -->
+                <div id="db-conflict-warning" style="display:none; margin-bottom:16px; padding:14px 16px; background:#fef2f2; border:1px solid #fecaca; border-left:4px solid var(--danger); border-radius:10px;">
+                    <div style="font-weight:800; color:var(--danger); font-size:13px; margin-bottom:8px;">⚡ Interaction Alert — Conflicts with Current Regimen</div>
+                    <div id="db-conflict-list" style="display:flex; flex-direction:column; gap:6px;"></div>
+                </div>
+
+                <div style="border-top:1px solid var(--border); margin-bottom:16px; padding-top:16px;">
+                    <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:12px;">✏️ Medicine Details (Edit or fill manually)</div>
+
+                    <div style="margin-bottom:12px;">
+                        <label style="display:block; font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:5px;">Medicine Name *</label>
+                        <input type="text" id="modal-med-name" class="modal-input" placeholder="e.g. Lisinopril">
                     </div>
-                    <div>
-                        <label style="display:block; font-size:12px; font-weight:700; color:var(--text-muted); margin-bottom:5px;">Therapy Value</label>
-                        <input type="number" id="modal-med-tv" class="modal-input" value="7" min="1" max="10">
+
+                    <div style="margin-bottom:12px;">
+                        <label style="display:block; font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:5px;">Category / Description</label>
+                        <input type="text" id="modal-med-desc" class="modal-input" placeholder="Brief description...">
                     </div>
-                    <div>
-                        <label style="display:block; font-size:12px; font-weight:700; color:var(--text-muted); margin-bottom:5px;">Days Stock</label>
-                        <input type="number" id="modal-med-qty" class="modal-input" value="30" min="1">
+
+                    <div style="margin-bottom:12px;">
+                        <label style="display:block; font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:5px;">Dosage (e.g., 50mg, 1 tablet)</label>
+                        <input type="text" id="modal-med-amount" class="modal-input" placeholder="e.g. 50mg">
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                        <div>
+                            <label style="display:block; font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:5px;">Doses per Day</label>
+                            <input type="number" id="modal-med-doses" class="modal-input" value="1" min="1" max="4">
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:5px;">Food Rule</label>
+                            <select id="modal-med-food" class="modal-input">
+                                <option value="any">Any Time</option>
+                                <option value="after_food">After Food</option>
+                                <option value="empty">Empty Stomach</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:4px;">
+                        <div>
+                            <label style="display:block; font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:5px;">Side Effect Score <span style="color:var(--danger);">1–10</span></label>
+                            <input type="number" id="modal-med-se" class="modal-input" value="3" min="1" max="10">
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:5px;">Therapy Value <span style="color:var(--success);">1–10</span></label>
+                            <input type="number" id="modal-med-tv" class="modal-input" value="7" min="1" max="10">
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:5px;">Days Stock</label>
+                            <input type="number" id="modal-med-qty" class="modal-input" value="30" min="1">
+                        </div>
+                    </div>
+                    <div style="margin-top: 15px; display: flex; align-items: center; gap: 8px; padding-top: 12px; border-top: 1px dashed var(--border);">
+                        <input type="checkbox" id="modal-med-required" style="width: 16px; height: 16px; cursor: pointer;">
+                        <label for="modal-med-required" style="font-size: 12px; font-weight: 700; color: var(--text); cursor: pointer;">Life-Critical / Required (Mandatory for patient health)</label>
                     </div>
                 </div>
 
-                <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <div style="display:flex; justify-content:flex-end; gap:10px; padding-top:4px;">
                     <button class="btn" style="background:var(--border); color:var(--text-muted);" onclick="closeMedModal()">Cancel</button>
-                    <button class="btn btn-primary" onclick="saveMedModal()">Save Medicine</button>
+                    <button class="btn btn-primary" onclick="saveMedModal()">💾 Save Medicine</button>
                 </div>
             </div>
         </div>
@@ -1162,6 +1294,83 @@
     </div><!-- end #main-content -->
 
 <script>
+// ===================== MEDICINE DATABASE =====================
+// 40+ real medicines with clinical data, known conflicts, dosing rules
+const MEDICINE_DATABASE = [
+  // ── ANTIHYPERTENSIVES ──
+  { name:"Lisinopril",         category:"ACE Inhibitor",              dosage:"10mg",      doses_per_day:1, dose_gap_hours:24, food_rule:"any",        side_effect_score:3, therapeutic_value:8,  desc:"ACE Inhibitor | Reduces BP by blocking angiotensin-II, protective in diabetic nephropathy",               known_conflicts:{"Spironolactone":"moderate","Potassium":"moderate"} },
+  { name:"Amlodipine",         category:"Calcium Channel Blocker",    dosage:"5mg",       doses_per_day:1, dose_gap_hours:24, food_rule:"any",        side_effect_score:3, therapeutic_value:8,  desc:"Calcium Channel Blocker | Relaxes blood vessel smooth muscle to reduce blood pressure",                  known_conflicts:{} },
+  { name:"Atenolol",           category:"Beta Blocker",               dosage:"50mg",      doses_per_day:1, dose_gap_hours:24, food_rule:"any",        side_effect_score:4, therapeutic_value:7,  desc:"Beta Blocker | Slows heart rate and reduces BP, used in hypertension and angina",                        known_conflicts:{"Verapamil":"major","Diltiazem":"major"} },
+  { name:"Metoprolol",         category:"Beta Blocker",               dosage:"50mg",      doses_per_day:2, dose_gap_hours:12, food_rule:"after_food", side_effect_score:3, therapeutic_value:9,  desc:"Beta-Blocker | Controls heart rate in atrial fibrillation, reduces cardiac workload",                   known_conflicts:{"Verapamil":"major","Diltiazem":"major"} },
+  { name:"Hydrochlorothiazide",category:"Thiazide Diuretic",          dosage:"25mg",      doses_per_day:1, dose_gap_hours:24, food_rule:"after_food", side_effect_score:4, therapeutic_value:7,  desc:"Thiazide Diuretic | Reduces BP by promoting sodium and water excretion via kidneys",                    known_conflicts:{"Lithium":"major","Digoxin":"moderate"} },
+  { name:"Furosemide",         category:"Loop Diuretic",              dosage:"40mg",      doses_per_day:1, dose_gap_hours:24, food_rule:"any",        side_effect_score:5, therapeutic_value:8,  desc:"Loop Diuretic | Powerful agent for fluid overload in heart failure and severe hypertension",             known_conflicts:{"Digoxin":"moderate","Gentamicin":"major"} },
+  { name:"Losartan",           category:"ARB",                        dosage:"50mg",      doses_per_day:1, dose_gap_hours:24, food_rule:"any",        side_effect_score:2, therapeutic_value:8,  desc:"Angiotensin Receptor Blocker | Controls BP, renal-protective in diabetic nephropathy",                  known_conflicts:{"Spironolactone":"moderate"} },
+  { name:"Verapamil",          category:"CCB (Non-DHP)",              dosage:"80mg",      doses_per_day:3, dose_gap_hours:8,  food_rule:"after_food", side_effect_score:5, therapeutic_value:7,  desc:"Non-DHP Calcium Channel Blocker | Controls heart rate and BP, used for SVT and angina",                 known_conflicts:{"Atenolol":"major","Metoprolol":"major","Digoxin":"major","Simvastatin":"moderate"} },
+  { name:"Spironolactone",     category:"K-sparing Diuretic",        dosage:"25mg",      doses_per_day:1, dose_gap_hours:24, food_rule:"after_food", side_effect_score:4, therapeutic_value:7,  desc:"Potassium-sparing Diuretic | Used in heart failure and resistant hypertension",                         known_conflicts:{"Lisinopril":"moderate","Losartan":"moderate"} },
+
+  // ── ANTIDIABETICS ──
+  { name:"Metformin",          category:"Antidiabetic (Biguanide)",   dosage:"500mg",     doses_per_day:2, dose_gap_hours:6,  food_rule:"after_food", side_effect_score:4, therapeutic_value:9,  desc:"Antidiabetic (Biguanide) | First-line for Type 2 Diabetes — reduces hepatic glucose output",            known_conflicts:{} },
+  { name:"Glipizide",          category:"Sulfonylurea",               dosage:"5mg",       doses_per_day:1, dose_gap_hours:24, food_rule:"empty",      side_effect_score:4, therapeutic_value:7,  desc:"Sulfonylurea | Stimulates pancreatic insulin secretion to lower postprandial blood sugar",              known_conflicts:{"Fluconazole":"moderate","Aspirin":"minor"} },
+  { name:"Glimepiride",        category:"Sulfonylurea",               dosage:"2mg",       doses_per_day:1, dose_gap_hours:24, food_rule:"after_food", side_effect_score:3, therapeutic_value:7,  desc:"Sulfonylurea | Long-acting insulin secretagogue for Type 2 Diabetes management",                       known_conflicts:{} },
+  { name:"Sitagliptin",        category:"DPP-4 Inhibitor",           dosage:"100mg",     doses_per_day:1, dose_gap_hours:24, food_rule:"any",        side_effect_score:2, therapeutic_value:7,  desc:"DPP-4 Inhibitor | Prevents breakdown of incretin hormones — weight-neutral antidiabetic",              known_conflicts:{} },
+  { name:"Insulin Glargine",   category:"Long-acting Insulin",       dosage:"10 units",  doses_per_day:1, dose_gap_hours:24, food_rule:"any",        side_effect_score:3, therapeutic_value:10, desc:"Basal Insulin | Once-daily injection controlling fasting and overnight blood glucose",                  known_conflicts:{} },
+
+  // ── ANTICOAGULANTS / ANTIPLATELETS ──
+  { name:"Warfarin",           category:"Anticoagulant",              dosage:"5mg",       doses_per_day:1, dose_gap_hours:24, food_rule:"any",        side_effect_score:7, therapeutic_value:9,  desc:"Vitamin K Antagonist | Prevents clots in AF, DVT, PE — requires regular INR monitoring",              known_conflicts:{"Aspirin":"major","Ibuprofen":"major","Naproxen":"major","Ciprofloxacin":"major","Amiodarone":"major","Fluconazole":"major"} },
+  { name:"Aspirin",            category:"NSAID / Antiplatelet",       dosage:"75mg",      doses_per_day:1, dose_gap_hours:24, food_rule:"after_food", side_effect_score:5, therapeutic_value:7,  desc:"Antiplatelet | Low-dose prevents MI and stroke; higher doses for pain and fever",                      known_conflicts:{"Warfarin":"major","Ibuprofen":"moderate","Naproxen":"moderate","Clopidogrel":"minor"} },
+  { name:"Clopidogrel",        category:"Antiplatelet",               dosage:"75mg",      doses_per_day:1, dose_gap_hours:24, food_rule:"any",        side_effect_score:4, therapeutic_value:8,  desc:"P2Y12 Inhibitor | Prevents platelet aggregation — used post-MI and after coronary stent",              known_conflicts:{"Omeprazole":"moderate","Aspirin":"minor","Fluconazole":"moderate"} },
+  { name:"Rivaroxaban",        category:"NOAC (Factor Xa Inhibitor)",dosage:"20mg",      doses_per_day:1, dose_gap_hours:24, food_rule:"after_food", side_effect_score:5, therapeutic_value:9,  desc:"Novel Oral Anticoagulant | Prevents stroke in AF and treats DVT/PE — no INR monitoring needed",        known_conflicts:{"Aspirin":"moderate","Ibuprofen":"moderate","Ketoconazole":"major"} },
+  { name:"Heparin",            category:"Anticoagulant (Parenteral)",dosage:"5000 units",doses_per_day:2, dose_gap_hours:12, food_rule:"any",        side_effect_score:6, therapeutic_value:9,  desc:"Rapid-acting Anticoagulant | Hospital use for acute clot management and DVT prophylaxis",              known_conflicts:{"Aspirin":"major","Warfarin":"major"} },
+
+  // ── NSAIDs / ANALGESICS ──
+  { name:"Ibuprofen",          category:"NSAID",                      dosage:"400mg",     doses_per_day:2, dose_gap_hours:6,  food_rule:"after_food", side_effect_score:6, therapeutic_value:6,  desc:"NSAID | Anti-inflammatory for musculoskeletal pain, fever — avoid in GI ulcers",                       known_conflicts:{"Warfarin":"major","Aspirin":"moderate","Lisinopril":"minor"} },
+  { name:"Naproxen",           category:"NSAID",                      dosage:"500mg",     doses_per_day:2, dose_gap_hours:8,  food_rule:"after_food", side_effect_score:5, therapeutic_value:7,  desc:"Long-acting NSAID | Anti-inflammatory for arthritis and chronic pain syndromes",                       known_conflicts:{"Warfarin":"major","Aspirin":"moderate"} },
+  { name:"Paracetamol",        category:"Analgesic / Antipyretic",   dosage:"500mg",     doses_per_day:3, dose_gap_hours:6,  food_rule:"any",        side_effect_score:2, therapeutic_value:6,  desc:"Analgesic | Safest pain/fever reliever — lowest GI risk; avoid alcohol as it risks liver damage",      known_conflicts:{} },
+  { name:"Tramadol",           category:"Opioid Analgesic",           dosage:"50mg",      doses_per_day:2, dose_gap_hours:6,  food_rule:"any",        side_effect_score:7, therapeutic_value:7,  desc:"Opioid + Serotonin-modulating Analgesic | Moderate-severe pain — risk of serotonin syndrome with SSRIs",known_conflicts:{"Sertraline":"major","Escitalopram":"major"} },
+
+  // ── GI MEDICATIONS ──
+  { name:"Omeprazole",         category:"Proton Pump Inhibitor",      dosage:"20mg",      doses_per_day:1, dose_gap_hours:24, food_rule:"empty",      side_effect_score:2, therapeutic_value:7,  desc:"PPI | Suppresses stomach acid — take 30 min before first meal for best absorption",                    known_conflicts:{"Clopidogrel":"moderate"} },
+  { name:"Pantoprazole",       category:"Proton Pump Inhibitor",      dosage:"40mg",      doses_per_day:1, dose_gap_hours:24, food_rule:"empty",      side_effect_score:2, therapeutic_value:7,  desc:"PPI | Suppresses gastric acid for GERD, peptic ulcer disease, and Zollinger-Ellison syndrome",          known_conflicts:{} },
+  { name:"Ranitidine",         category:"H2 Receptor Blocker",       dosage:"150mg",     doses_per_day:2, dose_gap_hours:12, food_rule:"any",        side_effect_score:2, therapeutic_value:6,  desc:"H2 Blocker | Reduces acid production for heartburn and duodenal ulcers",                              known_conflicts:{} },
+
+  // ── CARDIAC ──
+  { name:"Digoxin",            category:"Cardiac Glycoside",         dosage:"0.25mg",    doses_per_day:1, dose_gap_hours:24, food_rule:"any",        side_effect_score:8, therapeutic_value:8,  desc:"Cardiac Glycoside | Slows AV node conduction in AF and improves contractility in heart failure",       known_conflicts:{"Verapamil":"major","Amiodarone":"major","Furosemide":"moderate","Hydrochlorothiazide":"moderate"} },
+  { name:"Atorvastatin",       category:"Statin",                    dosage:"10mg",      doses_per_day:1, dose_gap_hours:24, food_rule:"any",        side_effect_score:3, therapeutic_value:8,  desc:"HMG-CoA Reductase Inhibitor | Lowers LDL cholesterol and reduces cardiovascular event risk",           known_conflicts:{"Verapamil":"moderate","Gemfibrozil":"major"} },
+  { name:"Simvastatin",        category:"Statin",                    dosage:"20mg",      doses_per_day:1, dose_gap_hours:24, food_rule:"any",        side_effect_score:4, therapeutic_value:7,  desc:"Statin | Reduces LDL and triglycerides — take in the evening for best effect",                         known_conflicts:{"Verapamil":"moderate","Amiodarone":"moderate","Gemfibrozil":"major"} },
+  { name:"Amiodarone",         category:"Antiarrhythmic (Class III)",dosage:"200mg",     doses_per_day:1, dose_gap_hours:24, food_rule:"after_food", side_effect_score:9, therapeutic_value:9,  desc:"Class III Antiarrhythmic | Controls life-threatening ventricular and supraventricular arrhythmias",    known_conflicts:{"Warfarin":"major","Digoxin":"major","Simvastatin":"moderate"} },
+  { name:"Nitroglycerin",      category:"Nitrate",                   dosage:"0.5mg SL",  doses_per_day:1, dose_gap_hours:0,  food_rule:"any",        side_effect_score:4, therapeutic_value:9,  desc:"Sublingual Nitrate | Rapid vasodilation for acute angina — never combine with PDE5 inhibitors",        known_conflicts:{"Sildenafil":"major","Tadalafil":"major"} },
+
+  // ── ANTIEPILEPTICS ──
+  { name:"Levetiracetam",      category:"Antiepileptic",              dosage:"500mg",     doses_per_day:2, dose_gap_hours:12, food_rule:"any",        side_effect_score:4, therapeutic_value:9,  desc:"Anti-epileptic | Modulates synaptic neurotransmission to prevent partial and generalised seizures",    known_conflicts:{} },
+  { name:"Phenytoin",          category:"Antiepileptic",              dosage:"100mg",     doses_per_day:2, dose_gap_hours:12, food_rule:"after_food", side_effect_score:6, therapeutic_value:8,  desc:"Sodium Channel Blocker | Controls grand mal seizures — narrow therapeutic index, monitor levels",     known_conflicts:{"Warfarin":"major","Omeprazole":"minor"} },
+  { name:"Valproic Acid",      category:"Antiepileptic / Mood",      dosage:"500mg",     doses_per_day:2, dose_gap_hours:12, food_rule:"after_food", side_effect_score:6, therapeutic_value:8,  desc:"Anticonvulsant | Broad-spectrum seizure control and mood stabiliser in bipolar disorder",              known_conflicts:{"Aspirin":"moderate","Warfarin":"moderate","Lamotrigine":"major"} },
+  { name:"Carbamazepine",      category:"Antiepileptic",              dosage:"200mg",     doses_per_day:2, dose_gap_hours:12, food_rule:"after_food", side_effect_score:5, therapeutic_value:8,  desc:"Sodium Channel Blocker | Controls focal seizures and trigeminal neuralgia",                            known_conflicts:{"Warfarin":"major"} },
+
+  // ── ANTIBIOTICS ──
+  { name:"Amoxicillin",        category:"Antibiotic (Penicillin)",   dosage:"500mg",     doses_per_day:3, dose_gap_hours:8,  food_rule:"any",        side_effect_score:2, therapeutic_value:8,  desc:"Broad-spectrum Penicillin | Treats ear, throat, chest, and urinary tract bacterial infections",        known_conflicts:{"Warfarin":"moderate"} },
+  { name:"Ciprofloxacin",      category:"Antibiotic (Fluoroquinolone)",dosage:"500mg",   doses_per_day:2, dose_gap_hours:12, food_rule:"any",        side_effect_score:4, therapeutic_value:8,  desc:"Fluoroquinolone | Treats UTIs, respiratory and GI infections — avoid with antacids or iron",           known_conflicts:{"Warfarin":"major"} },
+  { name:"Azithromycin",       category:"Antibiotic (Macrolide)",    dosage:"500mg",     doses_per_day:1, dose_gap_hours:24, food_rule:"any",        side_effect_score:3, therapeutic_value:8,  desc:"Macrolide Antibiotic | 5-day course for community-acquired pneumonia and STIs",                        known_conflicts:{"Warfarin":"moderate","Digoxin":"moderate"} },
+  { name:"Doxycycline",        category:"Antibiotic (Tetracycline)", dosage:"100mg",     doses_per_day:2, dose_gap_hours:12, food_rule:"after_food", side_effect_score:4, therapeutic_value:7,  desc:"Tetracycline | Treats chest infections, skin conditions, Lyme disease — avoid with milk or iron",      known_conflicts:{"Warfarin":"moderate"} },
+
+  // ── THYROID ──
+  { name:"Levothyroxine",      category:"Thyroid Hormone",           dosage:"50mcg",     doses_per_day:1, dose_gap_hours:24, food_rule:"empty",      side_effect_score:2, therapeutic_value:9,  desc:"Synthetic T4 | Hormone replacement for hypothyroidism — take 30–60 min before breakfast",              known_conflicts:{"Calcium Carbonate":"moderate","Ferrous Sulfate":"major","Warfarin":"moderate"} },
+
+  // ── MENTAL HEALTH ──
+  { name:"Sertraline",         category:"SSRI Antidepressant",       dosage:"50mg",      doses_per_day:1, dose_gap_hours:24, food_rule:"any",        side_effect_score:4, therapeutic_value:8,  desc:"SSRI | First-line for depression, anxiety, OCD, PTSD — takes 2–4 weeks for full effect",              known_conflicts:{"Tramadol":"major","Warfarin":"moderate"} },
+  { name:"Alprazolam",         category:"Benzodiazepine",            dosage:"0.25mg",    doses_per_day:2, dose_gap_hours:12, food_rule:"any",        side_effect_score:6, therapeutic_value:7,  desc:"Benzodiazepine | Short-term anxiolytic and panic disorder treatment — avoid with alcohol",              known_conflicts:{} },
+
+  // ── SUPPLEMENTS ──
+  { name:"Vitamin D3",         category:"Supplement",                dosage:"1000 IU",   doses_per_day:1, dose_gap_hours:24, food_rule:"after_food", side_effect_score:1, therapeutic_value:5,  desc:"Supplement | Prevents bone loss in patients on antiepileptic or steroid therapy",                     known_conflicts:{} },
+  { name:"Vitamin B12",        category:"Supplement",                dosage:"500mcg",    doses_per_day:1, dose_gap_hours:24, food_rule:"any",        side_effect_score:1, therapeutic_value:5,  desc:"Supplement | Metformin depletes B12 — prevents neuropathy and megaloblastic anaemia",                 known_conflicts:{} },
+  { name:"Calcium Carbonate",  category:"Supplement",                dosage:"500mg",     doses_per_day:2, dose_gap_hours:12, food_rule:"after_food", side_effect_score:1, therapeutic_value:5,  desc:"Calcium Supplement | Bone health — take separately from other minerals; chelates some antibiotics",    known_conflicts:{"Doxycycline":"major","Ciprofloxacin":"major","Levothyroxine":"moderate"} },
+  { name:"Ferrous Sulfate",    category:"Supplement",                dosage:"200mg",     doses_per_day:2, dose_gap_hours:12, food_rule:"empty",      side_effect_score:3, therapeutic_value:7,  desc:"Iron Supplement | Treats iron-deficiency anaemia — take on empty stomach for best absorption",         known_conflicts:{"Doxycycline":"major","Ciprofloxacin":"major","Levothyroxine":"major"} },
+];
+
+// Lookup: find a DB entry by exact name (case-insensitive)
+function findInDB(name) {
+    return MEDICINE_DATABASE.find(m => m.name.toLowerCase() === name.toLowerCase());
+}
+
 // ===================== DATA =====================
 
 // Patient P001 — John Doe (Hypertension + Diabetes)
@@ -1276,6 +1485,7 @@ const FirebaseApp = {
 
         document.getElementById('sidebar').style.display = 'flex';
         document.getElementById('main-content').style.display = 'flex';
+        document.getElementById('mobile-top-bar').style.display = '';
 
         if(role === 'doctor') {
             const doc = this.db.doctors['DOC-101'];
@@ -1288,6 +1498,7 @@ const FirebaseApp = {
             document.getElementById('user-card-patient').style.display = 'none';
             document.getElementById('sidebar-user-name').textContent = doc.name;
             document.getElementById('role-badge-display').textContent = '🩺 Doctor';
+            document.getElementById('mobile-user-avatar').textContent = '👨‍⚕️';
 
             // Show patient switcher, hide patient doctor strip
             document.getElementById('patient-switcher').style.display = 'block';
@@ -1316,6 +1527,7 @@ const FirebaseApp = {
             document.getElementById('user-card-patient').style.display = 'flex';
             document.getElementById('user-card-doctor').style.display = 'none';
             document.getElementById('sidebar-patient-name').textContent = pat.name;
+            document.getElementById('mobile-user-avatar').textContent = '👤';
 
             // Hide patient switcher, show doctor strip
             document.getElementById('patient-switcher').style.display = 'none';
@@ -1585,9 +1797,17 @@ function updateDashboard(patient, meds) {
     let todayDoses = [];
     meds.forEach(m => {
         const start = m.window[0];
-        for(let d=0; d<m.doses_per_day; d++) {
-            let h = start + d*m.dose_gap_hours;
-            if(h <= m.window[1]) todayDoses.push({ time: h, name: m.name, rule: m.food_rule });
+        if (m.rescheduled_hour_today !== undefined) {
+            todayDoses.push({ time: m.rescheduled_hour_today, name: m.name, rule: m.food_rule, isRescheduled: true });
+            for(let d=1; d<m.doses_per_day; d++) {
+                let h = start + d*m.dose_gap_hours;
+                if(h <= m.window[1]) todayDoses.push({ time: h, name: m.name, rule: m.food_rule });
+            }
+        } else {
+            for(let d=0; d<m.doses_per_day; d++) {
+                let h = start + d*m.dose_gap_hours;
+                if(h <= m.window[1]) todayDoses.push({ time: h, name: m.name, rule: m.food_rule });
+            }
         }
     });
     todayDoses.sort((a,b) => a.time - b.time);
@@ -1597,29 +1817,30 @@ function updateDashboard(patient, meds) {
         if(todayDoses.length === 0) {
             schedList.innerHTML = `<div style="padding:20px; text-align:center; color:var(--text-muted); font-size:13px;">No medicines scheduled today.</div>`;
         } else {
-            schedList.innerHTML = todayDoses.slice(0, 4).map((d, i) => {
+            schedList.innerHTML = todayDoses.map((d, i) => {
                 let icon = d.rule === 'empty' ? '🔔' : (d.rule === 'after_food' ? '🍽️' : '⏱️');
-                let border = i < 3 ? 'border-bottom:1px solid var(--border);' : '';
+                let border = i < todayDoses.length - 1 ? 'border-bottom:1px solid var(--border);' : '';
+                let resBadge = d.isRescheduled ? '<span class="badge badge-amber" style="font-size:9px; margin-left:6px; padding: 2px 6px;">Rescheduled</span>' : '';
                 
                 if(appState.currentRole === 'patient') {
                     return `<div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; ${border}">
                                 <div style="display:flex; align-items:center; gap:12px; flex:1;">
-                                    <div style="display:flex; gap:4px;" class="dose-actions">
-                                        <button style="border:1px solid var(--border); background:var(--main-bg); border-radius:4px; padding:2px 6px; cursor:pointer;" onclick="markDose(this, 'taken')" title="Mark as Taken">✅</button>
-                                        <button style="border:1px solid var(--border); background:var(--main-bg); border-radius:4px; padding:2px 6px; cursor:pointer;" onclick="markDose(this, 'missed')" title="Mark as Missed">❌</button>
-                                    </div>
-                                    <div style="display:flex; flex-direction:column;">
-                                        <span style="font-weight:700; font-size:13px; color:var(--text); transition:all 0.2s;" class="dose-name">${d.name}</span>
-                                        <span style="font-weight:800; color:var(--primary); font-size:11px;">${fmtTime(d.time)}</span>
-                                    </div>
+                                     <div style="display:flex; gap:4px;" class="dose-actions">
+                                         <button style="border:1px solid var(--border); background:var(--main-bg); border-radius:4px; padding:2px 6px; cursor:pointer;" onclick="markDose(this, 'taken')" title="Mark as Taken">✅</button>
+                                         <button style="border:1px solid var(--border); background:var(--main-bg); border-radius:4px; padding:2px 6px; cursor:pointer;" onclick="markDose(this, 'missed')" title="Mark as Missed">❌</button>
+                                     </div>
+                                     <div style="display:flex; flex-direction:column;">
+                                         <span style="font-weight:700; font-size:13px; color:var(--text); transition:all 0.2s;" class="dose-name">${d.name}${resBadge}</span>
+                                         <span style="font-weight:800; color:var(--primary); font-size:11px;">${fmtTime(d.time)}</span>
+                                     </div>
                                 </div>
                                 <span style="font-size:18px;">${icon}</span>
                             </div>`;
                 } else {
                     return `<div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; ${border}">
-                                <span style="font-weight:800; color:var(--primary); width:85px; font-size:13px;">${fmtTime(d.time)}</span>
-                                <span style="flex:1; font-weight:600; font-size:13px;">${d.name}</span>
-                                <span style="font-size:18px;">${icon}</span>
+                                 <span style="font-weight:800; color:var(--primary); width:85px; font-size:13px;">${fmtTime(d.time)}</span>
+                                 <span style="flex:1; font-weight:600; font-size:13px;">${d.name}${resBadge}</span>
+                                 <span style="font-size:18px;">${icon}</span>
                             </div>`;
                 }
             }).join('');
@@ -1627,12 +1848,7 @@ function updateDashboard(patient, meds) {
     }
     const schedMore = document.getElementById('dash-schedule-more');
     if(schedMore) {
-        if(todayDoses.length > 4) {
-            schedMore.textContent = `+${todayDoses.length - 4} more dose(s) today`;
-            schedMore.style.display = 'block';
-        } else {
-            schedMore.style.display = 'none';
-        }
+        schedMore.style.display = 'none';
     }
 
     // Build Dynamic Dashboard Warnings
@@ -1650,17 +1866,126 @@ function updateDashboard(patient, meds) {
         if(conflicts.length === 0) {
             warnsList.innerHTML = `<div style="padding:20px; text-align:center; color:var(--success); font-size:13px; font-weight:700;">✅ No active warnings or conflicts!</div>`;
         } else {
+            // Clinical risk descriptions for known pairs
+            const RISK_DESC = {
+                'Aspirin+Warfarin':     '⚠️ Combined use raises bleeding risk. Both inhibit clotting through different pathways.',
+                'Warfarin+Aspirin':     '⚠️ Combined use raises bleeding risk. Both inhibit clotting through different pathways.',
+                'Aspirin+Ibuprofen':    '⚠️ Both NSAIDs together increase stomach ulcer and GI bleed risk.',
+                'Ibuprofen+Aspirin':    '⚠️ Both NSAIDs together increase stomach ulcer and GI bleed risk.',
+                'Warfarin+Ibuprofen':   '⚠️ Ibuprofen displaces Warfarin from plasma proteins → free drug ↑ → bleeding risk.',
+                'Ibuprofen+Warfarin':   '⚠️ Ibuprofen displaces Warfarin from plasma proteins → free drug ↑ → bleeding risk.',
+                'Warfarin+Ciprofloxacin':'⚠️ Ciprofloxacin inhibits Warfarin metabolism via CYP1A2 → INR rises → bleeding risk.',
+                'Ciprofloxacin+Warfarin':'⚠️ Ciprofloxacin inhibits Warfarin metabolism via CYP1A2 → INR rises → bleeding risk.',
+                'Verapamil+Metoprolol': '⚠️ Both slow heart rate — combining risks complete AV block and cardiac arrest.',
+                'Metoprolol+Verapamil': '⚠️ Both slow heart rate — combining risks complete AV block and cardiac arrest.',
+                'Digoxin+Amiodarone':   '⚠️ Amiodarone raises Digoxin plasma levels → toxicity (nausea, arrhythmia, vision changes).',
+                'Amiodarone+Digoxin':   '⚠️ Amiodarone raises Digoxin plasma levels → toxicity (nausea, arrhythmia, vision changes).',
+            };
+
+            // What the doctor should do for each severity
+            const ACTION_STEPS = {
+                major:    ['🩺 Consider removing one drug', '📋 Review on Conflict Graph', '⏱️ Reschedule to separate time slots'],
+                moderate: ['📋 Separate time slots via Graph Coloring', '👁️ Monitor patient closely', '📝 Reduce dose if needed'],
+                minor:    ['📋 Schedule in different time slots', '📝 Document in patient notes']
+            };
+
+            // Track which warnings have been reviewed (stored in memory per session)
+            if(!window._reviewedWarnings) window._reviewedWarnings = new Set();
+ 
             warnsList.innerHTML = conflicts.map(c => {
                 let isMajor = c.sev === 'major';
-                let bg = isMajor ? 'var(--danger-bg)' : 'var(--warning-bg)';
-                let border = isMajor ? '#fecaca' : '#fde68a';
-                let color = isMajor ? 'var(--danger)' : '#92400e';
-                let icon = isMajor ? '⚡' : '⚠️';
-                let desc = isMajor ? 'Major interaction — severe risk.' : 'Moderate interaction — monitor closely.';
-                return `<div style="background: ${bg}; border: 1px solid ${border}; padding: 15px; border-radius: 10px; margin-bottom: 12px;">
-                            <div style="font-weight: 700; font-size: 14px; margin-bottom: 4px; color: ${color};">${icon} ${c.m1.name} + ${c.m2.name}</div>
-                            <div style="font-size: 12px; color: ${isMajor ? '#991b1b' : '#78350f'};">${desc}</div>
-                        </div>`;
+                let isModerate = c.sev === 'moderate';
+                const warnKey = `${c.m1.id}-${c.m2.id}`;
+                const isReviewed = window._reviewedWarnings.has(warnKey);
+
+                const docObj = FirebaseApp.db.doctors[patient.doctor];
+                const docName = docObj ? docObj.name : 'Dr. Gregory House';
+ 
+                let bg = isReviewed ? 'rgba(16,185,129,0.04)' : (isMajor ? 'var(--danger-bg)' : (isModerate ? 'var(--warning-bg)' : '#eff6ff'));
+                let border = isReviewed ? 'rgba(16,185,129,0.3)' : (isMajor ? '#fecaca' : (isModerate ? '#fde68a' : '#bfdbfe'));
+                let color = isReviewed ? 'var(--success)' : (isMajor ? 'var(--danger)' : (isModerate ? '#92400e' : '#1e40af'));
+                let borderLeft = isReviewed ? 'var(--success)' : (isMajor ? '#ef4444' : (isModerate ? '#f59e0b' : '#3b82f6'));
+                let icon = isReviewed ? '✅' : (isMajor ? '🚨' : (isModerate ? '⚠️' : 'ℹ️'));
+                let sevLabel = isMajor ? 'MAJOR' : (isModerate ? 'MODERATE' : 'MINOR');
+ 
+                const key1 = `${c.m1.name}+${c.m2.name}`;
+                const key2 = `${c.m2.name}+${c.m1.name}`;
+                
+                const isSimple = document.body.classList.contains('view-simple');
+
+                let riskDesc = isSimple
+                    ? (isMajor ? '⚠️ Serious interaction risk. Keep these medicines separated in timing.' : '⚠️ Moderate interaction risk. Discuss timing schedule with doctor.')
+                    : (RISK_DESC[key1] || RISK_DESC[key2] || (isMajor ? '⚠️ Serious pharmacological interaction — avoid concurrent use or monitor very closely.' : '⚠️ Moderate interaction — adjust timing or dose as needed.'));
+ 
+                const steps = ACTION_STEPS[c.sev] || ACTION_STEPS.minor;
+ 
+                // Why does the warning stay? Clinical explanation
+                const whyNote = isSimple ? '' : (isMajor
+                    ? `<div style="font-size:11px; padding:8px 10px; background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.15); border-radius:6px; color:#991b1b; margin-bottom:10px; line-height:1.6;">
+                        <strong>❓ Why does this warning stay after rescheduling?</strong><br>
+                        Rescheduling only separates <em>when</em> the drugs are taken. But both drugs have long half-lives 
+                        (e.g. Warfarin: ~40 hrs, Aspirin's platelet effect: 7–10 days) — they <strong>always overlap in the bloodstream</strong>.
+                        The warning is a <em>permanent clinical alert</em> until the drug is removed.
+                        Graph Coloring minimises peak overlap, but the interaction risk is always present.
+                      </div>`
+                    : `<div style="font-size:11px; padding:8px 10px; background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.2); border-radius:6px; color:#78350f; margin-bottom:10px; line-height:1.6;">
+                        <strong>❓ Why does this warning stay?</strong><br>
+                        Drug interactions are pharmacological — they exist whenever both drugs are in the regimen, regardless of timing.
+                        Scheduling reduces peak plasma overlap, but the interaction remains until one drug is removed.
+                      </div>`);
+ 
+                const reviewedBadge = isReviewed
+                    ? `<div style="padding:6px 10px; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); border-radius:6px; font-size:11px; font-weight:700; color:var(--success); margin-bottom:10px;">
+                        ✅ Reviewed by ${docName} — Risk acknowledged, managing with separate time slots
+                       </div>`
+                    : '';
+ 
+                // Only show action buttons to doctor role
+                const actionButtons = appState.currentRole === 'doctor'
+                    ? `<div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <button onclick="document.querySelector('[data-target=screen-graph]').click(); setTimeout(()=>{ const btn=document.querySelector('[onclick=\\'runGraphColoring()\\']'); if(btn) btn.click(); },400);"
+                            style="font-size:11px; font-weight:700; background:var(--primary); color:white; border:none; padding:5px 12px; border-radius:6px; cursor:pointer;">
+                            🎨 Conflict Graph →
+                        </button>
+                        <button onclick="document.querySelector('[data-target=screen-emergency]').click(); setTimeout(()=>{ const sel=document.getElementById('emerg-med-select'); if(sel){ for(let o of sel.options) if(o.text.includes('${c.m1.name}')) { sel.value=o.value; break; } } },400);"
+                            style="font-size:11px; font-weight:700; background:${isMajor?'#ef4444':(isModerate?'#f59e0b':'#3b82f6')}; color:white; border:none; padding:5px 12px; border-radius:6px; cursor:pointer;">
+                            ⏱️ Reschedule →
+                        </button>
+                        ${!isReviewed ? `<button onclick="acknowledgeWarning('${warnKey}')"
+                            style="font-size:11px; font-weight:700; background:var(--success); color:white; border:none; padding:5px 12px; border-radius:6px; cursor:pointer;">
+                            ✅ Doctor Reviewed
+                        </button>` : `<button onclick="window._reviewedWarnings.delete('${warnKey}'); updateDashboard(appState.activePatient, appState.medicines);"
+                            style="font-size:11px; font-weight:700; background:var(--border); color:var(--text-muted); border:none; padding:5px 12px; border-radius:6px; cursor:pointer;">
+                            ↩ Unmark
+                        </button>`}
+                        <button onclick="deleteMedicine(${c.m1.id})"
+                            style="font-size:11px; font-weight:700; background:transparent; color:var(--danger); border:1px solid var(--danger); padding:5px 12px; border-radius:6px; cursor:pointer;">
+                            🗑 Remove ${c.m1.name}
+                        </button>
+                    </div>`
+                    : `<div style="font-size:11px; color:var(--text-muted); font-style:italic;">
+                        🔔 Being managed by ${docName} using smart scheduling algorithms.
+                       </div>`;
+ 
+                return `<div id="warn-${warnKey}" style="background:${bg}; border:1px solid ${border}; border-left:4px solid ${borderLeft}; padding:14px 16px; border-radius:10px; margin-bottom:14px; transition: all 0.3s ease;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                        <span style="font-size:18px;">${icon}</span>
+                        <div style="flex:1;">
+                            <div style="font-weight:800; font-size:14px; color:${color};">${c.m1.name} + ${c.m2.name}</div>
+                            <span style="font-size:10px; font-weight:700; background:${borderLeft}; color:white; padding:1px 7px; border-radius:10px;">${sevLabel}</span>
+                            ${isReviewed ? '<span style="font-size:10px; font-weight:700; background:var(--success); color:white; padding:1px 7px; border-radius:10px; margin-left:4px;">REVIEWED</span>' : ''}
+                        </div>
+                    </div>
+                    ${reviewedBadge}
+                    <div style="font-size:12px; color:${isReviewed ? 'var(--text-muted)' : (isMajor ? '#991b1b' : (isModerate ? '#78350f' : '#1e40af'))}; line-height:1.5; margin-bottom:10px; padding:8px; background:rgba(255,255,255,0.6); border-radius:6px;">
+                        ${riskDesc}
+                    </div>
+                    ${!isReviewed ? whyNote : ''}
+                    ${!isSimple ? `<div style="font-size:11px; color:var(--text-muted); margin-bottom:10px; font-weight:600;">
+                        🩺 System action: ${steps.join(' → ')}
+                    </div>` : ''}
+                    ${actionButtons}
+                </div>`;
             }).join('');
         }
     }
@@ -1672,10 +1997,13 @@ function updateDashboard(patient, meds) {
             let names = majorConflicts.map(c => `${c.m1.name} + ${c.m2.name}`).join(', ');
             topAlert.innerHTML = `
                 <div style="color: var(--danger); font-weight: 700; display: flex; align-items: center; gap: 8px; font-size:14px;">
-                    <span>🔴</span> ${majorConflicts.length} Major Drug Interaction${majorConflicts.length>1?'s':''} Detected
+                    <span>🔴</span> ${majorConflicts.length} Major Drug Interaction${majorConflicts.length>1?'s':''} Detected — Action Required
                 </div>
                 <div style="font-size: 13px; margin-top: 6px; color: #991b1b;">
-                    ⚡ ${names} — see <a href="#" onclick="document.querySelector('[data-target=screen-interactions]').click(); return false;" style="color: var(--danger); font-weight: 700; text-decoration: underline;">Interactions</a>
+                    ⚡ ${names} — 
+                    <a href="#" onclick="document.querySelector('[data-target=screen-graph]').click(); setTimeout(()=>{ const b=document.querySelector('[onclick=\\'runGraphColoring()\\']'); if(b) b.click(); },400); return false;" style="color: var(--danger); font-weight: 700; text-decoration: underline;">Run Graph Coloring to separate →</a>
+                    &nbsp;|&nbsp;
+                    <a href="#" onclick="document.querySelector('[data-target=screen-interactions]').click(); return false;" style="color: var(--danger); font-weight: 700; text-decoration: underline;">View All Interactions</a>
                 </div>
             `;
             topAlert.style.display = 'block';
@@ -1685,10 +2013,29 @@ function updateDashboard(patient, meds) {
     }
 }
 
+function acknowledgeWarning(warnKey) {
+    if(!window._reviewedWarnings) window._reviewedWarnings = new Set();
+    window._reviewedWarnings.add(warnKey);
+
+    // Visual flash on the card before re-render
+    const card = document.getElementById(`warn-${warnKey}`);
+    if(card) {
+        card.style.transition = 'all 0.4s ease';
+        card.style.background = 'rgba(16,185,129,0.15)';
+        card.style.borderColor = 'var(--success)';
+        setTimeout(() => {
+            updateDashboard(appState.activePatient, appState.medicines);
+        }, 300);
+    } else {
+        updateDashboard(appState.activePatient, appState.medicines);
+    }
+}
+
 function markDose(btn, status) {
     const container = btn.closest('div').parentElement;
     const textEl = container.querySelector('.dose-name');
     const actionsEl = container.querySelector('.dose-actions');
+    const medName = textEl.textContent.trim().replace(/Rescheduled$/, '').trim(); // strip the 'Rescheduled' text if present
     
     const scoreEl = document.getElementById('adh-score');
     const bigScore = document.getElementById('adh-big-score');
@@ -1713,6 +2060,33 @@ function markDose(btn, status) {
             scoreEl.textContent = Math.max(0, current - 2) + '%';
             if(bigScore) bigScore.textContent = Math.max(0, current - 2) + '% Adherence Score';
         }
+        
+        // Show clinical prompt to auto-reschedule missed dose
+        setTimeout(() => {
+            if(confirm(`You missed your dose of ${medName}. Would you like to automatically calculate the safest rescheduled time slot using Dijkstra's algorithm?`)) {
+                const med = appState.medicines.find(m => m.name === medName);
+                if (med) {
+                    // Navigate to emergency screen
+                    const emergTab = document.querySelector('.nav-item[data-target="screen-emergency"]');
+                    if (emergTab) emergTab.click();
+                    
+                    setTimeout(() => {
+                        const sel = document.getElementById('emerg-med-select');
+                        if (sel) {
+                            sel.value = med.id;
+                            
+                            // Pre-fill time input with current actual hour
+                            const now = new Date();
+                            const timeInput = document.getElementById('emerg-time');
+                            if (timeInput) {
+                                timeInput.value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                            }
+                            runDijkstraReschedule();
+                        }
+                    }, 200);
+                }
+            }
+        }, 300);
     }
 }
 
@@ -1747,9 +2121,48 @@ function initUI() {
 
 function updateAdherenceUI() {
     const adherenceData = {
-        'P001': { score: 94, days: 28, missed: 3, msg: "Patient is highly compliant with the generated schedule.", badge: "🌟 Excellent Compliance — Keep it up!", color: "var(--success)", bg: "var(--success-bg)", border: "#bbf7d0", icon: "✅" },
-        'P002': { score: 72, days: 14, missed: 8, msg: "Compliance is dropping. Consider a simpler dosing schedule.", badge: "⚠️ Needs Review — Monitor closely", color: "#d97706", bg: "#fef3c7", border: "#fde68a", icon: "⚠️" },
-        'P003': { score: 98, days: 60, missed: 2, msg: "Outstanding long-term adherence to epilepsy regimen.", badge: "🏆 Perfect Track Record", color: "var(--success)", bg: "var(--success-bg)", border: "#bbf7d0", icon: "✅" }
+        'P001': { 
+            score: 94, days: 28, missed: 3, 
+            msg: "Patient is highly compliant with the generated schedule.", 
+            badge: "🌟 Excellent Compliance — Keep it up!", 
+            color: "var(--success)", bg: "var(--success-bg)", border: "#bbf7d0", icon: "✅",
+            trend: [90, 92, 95, 94, 93, 94, 94],
+            calendar: ['taken', 'taken', 'missed', 'taken', 'taken', 'taken', 'taken'],
+            logs: [
+                { med: "Omeprazole", time: "6:00 AM", status: "taken" },
+                { med: "Metformin", time: "6:00 AM", status: "taken" },
+                { med: "Aspirin", time: "3:00 AM", status: "taken" },
+                { med: "Ibuprofen", time: "5:00 AM", status: "taken" },
+                { med: "Amlodipine", time: "6:00 AM", status: "taken" },
+                { med: "Warfarin", time: "6:00 AM", status: "taken" }
+            ]
+        },
+        'P002': { 
+            score: 72, days: 14, missed: 8, 
+            msg: "Compliance is dropping. Consider a simpler dosing schedule.", 
+            badge: "⚠️ Needs Review — Monitor closely", 
+            color: "#d97706", bg: "#fef3c7", border: "#fde68a", icon: "⚠️",
+            trend: [85, 82, 78, 76, 74, 73, 72],
+            calendar: ['taken', 'missed', 'taken', 'missed', 'taken', 'missed', 'taken'],
+            logs: [
+                { med: "Warfarin", time: "6:00 AM", status: "missed" },
+                { med: "Metoprolol", time: "7:00 AM", status: "taken" },
+                { med: "Digoxin", time: "8:00 AM", status: "missed" }
+            ]
+        },
+        'P003': { 
+            score: 98, days: 60, missed: 2, 
+            msg: "Outstanding long-term adherence to epilepsy regimen.", 
+            badge: "🏆 Perfect Track Record", 
+            color: "var(--success)", bg: "var(--success-bg)", border: "#bbf7d0", icon: "✅",
+            trend: [98, 98, 97, 98, 99, 98, 98],
+            calendar: ['taken', 'taken', 'taken', 'taken', 'taken', 'taken', 'taken'],
+            logs: [
+                { med: "Levetiracetam", time: "7:00 AM", status: "taken" },
+                { med: "Lisinopril", time: "7:00 AM", status: "taken" },
+                { med: "Hydrochlorothiazide", time: "7:00 AM", status: "taken" }
+            ]
+        }
     };
     const ad = adherenceData[appState.activePatientId] || adherenceData['P001'];
     
@@ -1775,6 +2188,142 @@ function updateAdherenceUI() {
         badge.style.background = ad.bg;
         badge.style.borderColor = ad.border;
     }
+
+    // 1. Draw the Adherence Trend Line Chart
+    const canvas = document.getElementById('adh-chart');
+    if(canvas) {
+        const ctx = canvas.getContext('2d');
+        const w = canvas.offsetWidth || 350;
+        const h = canvas.offsetHeight || 180;
+        canvas.width = w; canvas.height = h;
+        
+        ctx.clearRect(0, 0, w, h);
+        
+        // Draw grid lines
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+        ctx.lineWidth = 1;
+        for (let i = 1; i < 4; i++) {
+            const y = (h / 4) * i;
+            ctx.beginPath();
+            ctx.moveTo(35, y);
+            ctx.lineTo(w - 10, y);
+            ctx.stroke();
+        }
+        
+        const paddingLeft = 35;
+        const paddingRight = 15;
+        const paddingTop = 25;
+        const paddingBottom = 20;
+        const chartW = w - paddingLeft - paddingRight;
+        const chartH = h - paddingTop - paddingBottom;
+        
+        const points = [];
+        const stepX = chartW / (ad.trend.length - 1);
+        
+        ad.trend.forEach((val, idx) => {
+            const ratio = (val - 50) / 50; // maps 50-100% to 0-1
+            const x = paddingLeft + (idx * stepX);
+            const y = h - paddingBottom - (ratio * chartH);
+            points.push({ x, y, val });
+        });
+        
+        // Draw area gradient under line
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, h - paddingBottom);
+        points.forEach(p => { ctx.lineTo(p.x, p.y); });
+        ctx.lineTo(points[points.length - 1].x, h - paddingBottom);
+        ctx.closePath();
+        const gradient = ctx.createLinearGradient(0, paddingTop, 0, h - paddingBottom);
+        gradient.addColorStop(0, 'rgba(79, 110, 247, 0.2)');
+        gradient.addColorStop(1, 'rgba(79, 110, 247, 0.00)');
+        ctx.fillStyle = gradient;
+        ctx.fill();
+        
+        // Draw line
+        ctx.beginPath();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = 'var(--primary)';
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        points.forEach((p, idx) => {
+            if (idx === 0) ctx.moveTo(p.x, p.y);
+            else ctx.lineTo(p.x, p.y);
+        });
+        ctx.stroke();
+        
+        // Draw dots and value labels
+        points.forEach((p, idx) => {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+            ctx.fillStyle = 'var(--primary)';
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            
+            if (idx === 0 || idx === points.length - 1 || idx === Math.floor(points.length / 2)) {
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = 'bold 9px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText(p.val + '%', p.x, p.y - 10);
+            }
+        });
+        
+        // Draw bottom labels
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '9px Inter';
+        ctx.textAlign = 'center';
+        const dayLabels = ['D-6', 'D-5', 'D-4', 'D-3', 'D-2', 'D-1', 'Today'];
+        points.forEach((p, idx) => {
+            ctx.fillText(dayLabels[idx], p.x, h - 5);
+        });
+    }
+
+    // 2. Render 7-Day Compliance Grid Checkboxes
+    const daysArr = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const calGrid = document.getElementById('adh-calendar-grid');
+    if (calGrid) {
+        calGrid.innerHTML = ad.calendar.map((status, idx) => {
+            const day = daysArr[idx];
+            const isTaken = status === 'taken';
+            const color = isTaken ? 'var(--success)' : 'var(--danger)';
+            const icon = isTaken ? '✓' : '✕';
+            const bg = isTaken ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)';
+            return `
+                <div style="display:flex; flex-direction:column; align-items:center; padding:8px; background:var(--main-bg); border:1px solid var(--border); border-radius:8px;">
+                    <span style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:6px;">${day}</span>
+                    <span style="width:22px; height:22px; border-radius:50%; background:${bg}; color:${color}; font-weight:800; font-size:11px; display:flex; align-items:center; justify-content:center; border:1px solid ${color}44;">
+                        ${icon}
+                    </span>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // 3. Render Detailed Dose Log Intake History Feed
+    const feed = document.getElementById('adh-dose-feed');
+    if (feed) {
+        feed.innerHTML = ad.logs.map(log => {
+            const isTaken = log.status === 'taken';
+            const badgeCol = isTaken ? 'var(--success)' : 'var(--danger)';
+            const badgeBg = isTaken ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)';
+            const icon = isTaken ? '🟢' : '🔴';
+            return `
+                <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; background:var(--main-bg); border:1px solid var(--border); border-radius:8px; font-size:12px;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span>${icon}</span>
+                        <div>
+                            <strong>${log.med}</strong>
+                            <span style="color:var(--text-muted); margin-left:4px;">at ${log.time}</span>
+                        </div>
+                    </div>
+                    <span style="font-size:10px; font-weight:800; padding:2px 8px; border-radius:12px; background:${badgeBg}; color:${badgeCol}; border:1px solid ${badgeCol}33;">
+                        ${log.status.toUpperCase()}
+                    </span>
+                </div>
+            `;
+        }).join('');
+    }
 }
 
 // ===================== LOGOUT =====================
@@ -1785,6 +2334,7 @@ function doLogout() {
 
     document.getElementById('sidebar').style.display = 'none';
     document.getElementById('main-content').style.display = 'none';
+    document.getElementById('mobile-top-bar').style.display = 'none';
 
     // Reset sidebar cards
     document.getElementById('user-card-doctor').style.display = 'none';
@@ -1813,6 +2363,20 @@ function doLogout() {
 }
 
 
+// ===================== MOBILE NAVIGATION MENU =====================
+function toggleMobileMenu(isOpen) {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    if (sidebar) {
+        if (isOpen) sidebar.classList.add('mobile-open');
+        else sidebar.classList.remove('mobile-open');
+    }
+    if (overlay) {
+        if (isOpen) overlay.classList.add('mobile-open');
+        else overlay.classList.remove('mobile-open');
+    }
+}
+
 // ===================== NAVIGATION =====================
 function setupNavigation() {
     document.querySelectorAll('.nav-item').forEach(link => {
@@ -1835,6 +2399,8 @@ function setupNavigation() {
                 if(targetId === 'screen-schedule') requestAnimationFrame(() => runIntervalScheduling());
                 if(targetId === 'screen-adherence') requestAnimationFrame(() => updateAdherenceUI());
             }
+            // Auto close mobile menu on selection
+            toggleMobileMenu(false);
         });
     });
 
@@ -1865,6 +2431,8 @@ function applyViewMode(mode) {
     }
     // Re-render medicine list with current mode awareness
     renderMedicineList(appState.medicines);
+    // Re-render dashboard warnings with current mode awareness
+    updateDashboard(appState.activePatient, appState.medicines);
 }
 
 function populateEmergencyDropdown() {
@@ -2070,13 +2638,35 @@ function renderInteractions() {
         return;
     }
 
+    // Clinical descriptions for known drug pairs
+    const CLINICAL_DESCRIPTIONS = {
+        'Aspirin+Warfarin': 'Both drugs inhibit different parts of the clotting cascade. Combined use significantly elevates the risk of serious or fatal bleeding (GI bleed, intracranial hemorrhage). INR must be monitored closely. Graph Coloring places these in separate time slots to reduce combined plasma levels.',
+        'Warfarin+Aspirin': 'Both drugs inhibit different parts of the clotting cascade. Combined use significantly elevates the risk of serious or fatal bleeding (GI bleed, intracranial hemorrhage). INR must be monitored closely. Graph Coloring places these in separate time slots to reduce combined plasma levels.',
+        'Aspirin+Ibuprofen': 'Both are NSAIDs. Concurrent use increases risk of GI ulceration and bleeding. Ibuprofen may also competitively inhibit Aspirin\'s antiplatelet effect, reducing its cardioprotective benefit. Take with food; schedule in separate time windows.',
+        'Ibuprofen+Aspirin': 'Both are NSAIDs. Concurrent use increases risk of GI ulceration and bleeding. Ibuprofen may also competitively inhibit Aspirin\'s antiplatelet effect, reducing its cardioprotective benefit. Take with food; schedule in separate time windows.',
+        'Warfarin+Ibuprofen': 'NSAIDs like Ibuprofen can displace Warfarin from plasma proteins, raising free Warfarin levels and increasing anticoagulant effect. This combination also irritates the GI mucosa, increasing bleed risk from a dual mechanism.',
+        'Ibuprofen+Warfarin': 'NSAIDs like Ibuprofen can displace Warfarin from plasma proteins, raising free Warfarin levels and increasing anticoagulant effect. This combination also irritates the GI mucosa, increasing bleed risk from a dual mechanism.',
+        'Warfarin+Aspirin_P002': 'In AF patients, Warfarin is the primary stroke-prevention agent. Adding Aspirin (antiplatelet) provides marginal additional benefit but substantially raises bleeding risk. Used only when the benefit clearly outweighs risk (e.g. concomitant ACS).',
+        'Lisinopril+Hydrochlorothiazide': 'The ACE Inhibitor may potentiate the hypotensive effect of Hydrochlorothiazide, leading to first-dose hypotension. Monitor blood pressure closely. Both are used together therapeutically but require careful dose titration.',
+        'Hydrochlorothiazide+Lisinopril': 'The ACE Inhibitor may potentiate the hypotensive effect of Hydrochlorothiazide, leading to first-dose hypotension. Monitor blood pressure closely. Both are used together therapeutically but require careful dose titration.'
+    };
+
     list.innerHTML = conflicts.map(c => {
         let isMajor = c.sev === 'major';
-        let bcolor = isMajor ? 'var(--danger)' : 'var(--warning)';
-        let badgeClass = isMajor ? 'badge-red' : 'badge-amber';
-        let badgeText = isMajor ? 'MAJOR' : 'MODERATE';
-        let icon = isMajor ? '🚨' : '⚠️';
-        let desc = isMajor ? 'Major risk! Graph Coloring has assigned these to separate time slots to minimize risk. Strict monitoring required.' : 'Moderate risk. Graph Coloring separates these automatically to reduce effects. Monitor as needed.';
+        let bcolor = isMajor ? 'var(--danger)' : (c.sev === 'moderate' ? 'var(--warning)' : 'var(--info)');
+        let badgeClass = isMajor ? 'badge-red' : (c.sev === 'moderate' ? 'badge-amber' : 'badge-blue');
+        let badgeText = isMajor ? '🚨 MAJOR' : (c.sev === 'moderate' ? '⚠️ MODERATE' : 'ℹ️ MINOR');
+        let icon = isMajor ? '🚨' : (c.sev === 'moderate' ? '⚠️' : 'ℹ️');
+
+        // Look up clinical description
+        const key1 = `${c.m1.name}+${c.m2.name}`;
+        const key2 = `${c.m2.name}+${c.m1.name}`;
+        let desc = CLINICAL_DESCRIPTIONS[key1] || CLINICAL_DESCRIPTIONS[key2];
+        if(!desc) {
+            desc = isMajor
+                ? `Major pharmacological interaction between ${c.m1.name} and ${c.m2.name}. Welsh-Powell Graph Coloring assigns them to separate time slots to minimize concurrent plasma levels and reduce adverse reaction risk. Strict clinical monitoring required.`
+                : `Moderate interaction between ${c.m1.name} and ${c.m2.name}. Graph Coloring separates these medicines to different time slots automatically. Monitor patient response and adjust dosing if necessary.`;
+        }
 
         return `
         <div class="card" style="border-left:4px solid ${bcolor};">
@@ -2084,13 +2674,13 @@ function renderInteractions() {
                 <div style="font-size:22px;">${icon}</div>
                 <div>
                     <div style="font-weight:800; font-size:15px;">${c.m1.name} + ${c.m2.name}</div>
-                    <span class="badge ${badgeClass}" style="font-size:10px; margin-top:4px;">${badgeText}</span>
+                    <span class="badge ${badgeClass}" style="font-size:10px; margin-top:4px; display:inline-block;">${badgeText}</span>
                 </div>
             </div>
             <div style="font-size:13px; color:var(--text-muted); line-height:1.6; padding:12px; background:var(--main-bg); border-radius:8px; border:1px solid var(--border);">
                 ${desc}
             </div>
-            <div style="font-size:12px; font-weight:700; color:var(--primary); margin-top:10px;">➔ Handled by Graph Coloring algorithm.</div>
+            <div style="font-size:12px; font-weight:700; color:var(--primary); margin-top:10px;">➔ Handled by Welsh-Powell Graph Coloring — conflicting medicines assigned to different time slots (colors).</div>
         </div>`;
     }).join('');
 }
@@ -2151,7 +2741,6 @@ function runIntervalScheduling() {
                     <div style="font-weight:800;font-size:15px;">\ud83d\udc8a ${s.name}</div>
                     <span style="font-size:11px;font-weight:700;color:${col};background:${col}22;padding:3px 10px;border-radius:10px;border:1px solid ${col}44;">${fmtRule(s.rule)}</span>
                 </div>
-                <div style="display:flex;flex-direction:column;gap:8px;">
                     ${s.times.map((t,i) => `<div style="display:flex;align-items:center;justify-content:space-between;padding:11px 16px;background:var(--main-bg);border-radius:8px;border:1px solid var(--border);">
                         <div style="display:flex;align-items:center;gap:10px;">
                             <span style="width:22px;height:22px;border-radius:50%;background:${col};color:white;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;">${i+1}</span>
@@ -2163,10 +2752,9 @@ function runIntervalScheduling() {
             </div>`;
         }).join('');
 
-        if(btn) { btn.textContent = '\u25b6 Generate Schedule'; btn.disabled = false; }
+        if(btn) { btn.textContent = '▶ Generate Schedule'; btn.disabled = false; }
     }, 80);
 }
-
 
 // Dijkstra Emergency
 function runDijkstraReschedule() {
@@ -2177,10 +2765,58 @@ function runDijkstraReschedule() {
     term.innerHTML = `<p style="color:#818cf8;">> Initializing Dijkstra's Shortest Path...</p>`;
     term.innerHTML += `<p style="color:#f59e0b;">> [Step 1] Initializing distances to Infinity for all temporal nodes...</p>`;
     
-    const nodes = [14,15,16,17,18,19,20,21,22];
+    const timeInput = document.getElementById('emerg-time');
+    const timeVal = timeInput ? timeInput.value : "";
+    let startHour = 14; 
+    
+    if (timeVal && timeVal.includes(':')) {
+        const parts = timeVal.split(':');
+        const parsed = parseInt(parts[0]);
+        if (!isNaN(parsed)) {
+            startHour = parsed;
+        }
+    }
+    
+    console.log('[Dijkstra] Raw emerg-time value:', timeVal, '-> Parsed startHour:', startHour);
+
+    const nodes = [];
+    for(let i=0; i<=8; i++) {
+        nodes.push(startHour + i);
+    }
+
     const dist = {}; const prev = {}; const pq = [];
-    nodes.forEach(n => { dist[n] = Infinity; pq.push(n); });
-    dist[14] = 0;
+    const conflictsAtHour = {}; // Store which hours have clinical overlap conflicts
+    
+    nodes.forEach(n => { 
+        dist[n] = Infinity; 
+        pq.push(n); 
+        
+        // Real clinical drug conflict check at each hour n (normalized to 24h format)
+        let hasConflict = false;
+        const normHour = n % 24;
+        
+        appState.medicines.forEach(otherMed => {
+            if (otherMed.id !== med.id && med.conflicts.includes(otherMed.id)) {
+                let otherHours = [];
+                if (otherMed.rescheduled_hour_today !== undefined) {
+                    otherHours.push(otherMed.rescheduled_hour_today);
+                } else {
+                    const otherStart = otherMed.window[0];
+                    for (let d = 0; d < otherMed.doses_per_day; d++) {
+                        otherHours.push((otherStart + d * otherMed.dose_gap_hours) % 24);
+                    }
+                }
+                
+                otherHours.forEach(oh => {
+                    if (Math.abs(oh - normHour) <= 1 || Math.abs(oh - normHour) >= 23) { // 1-hour overlap window
+                        hasConflict = true;
+                    }
+                });
+            }
+        });
+        conflictsAtHour[n] = hasConflict;
+    });
+    dist[startHour] = 0;
     
     term.innerHTML += `<p style="color:#f59e0b; margin-top:8px;">> [Step 2] Relaxing edges to find minimal penalty path...</p>`;
 
@@ -2188,31 +2824,168 @@ function runDijkstraReschedule() {
         pq.sort((a,b) => dist[a] - dist[b]);
         const u = pq.shift();
         if(dist[u] === Infinity) break;
-        term.innerHTML += `<p style="margin-top:6px;">> Extracting min node <strong style="color:var(--primary);">${u}:00</strong> (Penalty: ${dist[u]})</p>`;
+        term.innerHTML += `<p style="margin-top:6px;">> Extracting min node <strong style="color:var(--primary);">${fmtTime(u)}</strong> (Penalty: ${dist[u]})</p>`;
         
         [1,2,3].forEach(step => {
             const v = u + step;
             if(nodes.includes(v)) {
-                let weight = step * 10;
-                med.conflicts.forEach(() => { if(Math.random() > 0.7) weight += 50; }); // Simulated conflict risk penalty
+                let weight = step * 10; // delay penalty: +10 per hour
+                if (conflictsAtHour[v]) {
+                    weight += 60; // clinical conflict penalty
+                }
                 
-                term.innerHTML += `<p style="color:#94a3b8; font-size:12px; margin-left:10px;">➔ Checking edge to ${v}:00 (Edge Weight: ${weight})</p>`;
+                term.innerHTML += `<p style="color:#94a3b8; font-size:11px; margin-left:10px;">➔ Checking edge to ${fmtTime(v)} (Edge Weight: ${weight}${conflictsAtHour[v] ? ' [⚡ Conflict Override]' : ''})</p>`;
                 if(dist[u] + weight < dist[v]) { 
-                    term.innerHTML += `<p style="color:#10b981; font-size:12px; margin-left:20px;">✓ Edge Relaxed: dist[${v}] updated from ${dist[v]===Infinity?'∞':dist[v]} to ${dist[u] + weight}</p>`;
+                    term.innerHTML += `<p style="color:#10b981; font-size:11px; margin-left:20px;">✓ Edge Relaxed: dist[${fmtTime(v)}] updated from ${dist[v]===Infinity?'∞':dist[v]} to ${dist[u] + weight}</p>`;
                     dist[v] = dist[u] + weight; 
                     prev[v] = u; 
                 }
             }
         });
     }
-    // Find actual optimal slot from Dijkstra's computed distances
-    let bestTime = 15, bestPenalty = Infinity;
-    for(let t = 15; t <= 22; t++) { if(dist[t] < bestPenalty) { bestPenalty = dist[t]; bestTime = t; } }
-    const bestTimeStr = fmtTime(bestTime);
 
-    term.innerHTML += `<p style="color:#10b981;">> ✅ Dijkstra complete. Optimal slot: <strong>${bestTimeStr}</strong> (Penalty: ${bestPenalty})</p>`;
+    // Find optimal slot from computed distances (from startHour + 1 onwards)
+    let bestTime = startHour + 1, bestPenalty = Infinity;
+    for(let t = startHour + 1; t <= startHour + 8; t++) { 
+        if(dist[t] < bestPenalty) { 
+            bestPenalty = dist[t]; 
+            bestTime = t; 
+        } 
+    }
+    const bestTimeStr = fmtTime(bestTime % 24);
+
+    term.innerHTML += `<p style="color:#10b981; margin-top:8px;">> ✅ Dijkstra complete. Optimal slot: <strong>${bestTimeStr}</strong> (Penalty: ${bestPenalty})</p>`;
     term.scrollTop = term.scrollHeight;
     
+    // Draw the Penalty Graph Visualization
+    const canvas = document.getElementById('emerg-canvas');
+    if(canvas) {
+        const ctx = canvas.getContext('2d');
+        const w = canvas.offsetWidth || 400;
+        const h = canvas.offsetHeight || 160;
+        canvas.width = w; canvas.height = h;
+        
+        ctx.clearRect(0,0,w,h);
+        
+        // Coordinates for nodes
+        const nodePos = {};
+        const dx = w / (nodes.length + 1);
+        nodes.forEach((n, i) => {
+            nodePos[n] = {
+                x: dx * (i + 1),
+                y: h / 2 + 10
+            };
+        });
+        
+        // Draw edges (transitions)
+        nodes.forEach(u => {
+            [1,2,3].forEach(step => {
+                const v = u + step;
+                if(nodes.includes(v)) {
+                    const p1 = nodePos[u];
+                    const p2 = nodePos[v];
+                    ctx.beginPath();
+                    
+                    // Draw arc curve
+                    ctx.moveTo(p1.x, p1.y);
+                    const midX = (p1.x + p2.x) / 2;
+                    const midY = (p1.y + p2.y) / 2 - (step * 15);
+                    ctx.quadraticCurveTo(midX, midY, p2.x, p2.y);
+                    
+                    // Style by penalty weight
+                    const isConflict = conflictsAtHour[v];
+                    ctx.strokeStyle = isConflict ? 'rgba(239,68,68,0.2)' : 'rgba(255,255,255,0.08)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+            });
+        });
+        
+        // Reconstruct and highlight the shortest path in bright neon green
+        let curr = bestTime;
+        const path = [];
+        while(curr !== undefined) {
+            path.push(curr);
+            curr = prev[curr];
+        }
+        path.reverse();
+        
+        if(path.length > 1) {
+            ctx.beginPath();
+            ctx.lineWidth = 3.5;
+            ctx.strokeStyle = '#10b981'; // Neon green path
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            for(let i=0; i<path.length; i++) {
+                const p = nodePos[path[i]];
+                if(i === 0) {
+                    ctx.moveTo(p.x, p.y);
+                } else {
+                    const prevP = nodePos[path[i-1]];
+                    const midX = (prevP.x + p.x) / 2;
+                    const step = path[i] - path[i-1];
+                    const midY = (prevP.y + p.y) / 2 - (step * 15);
+                    ctx.quadraticCurveTo(midX, midY, p.x, p.y);
+                }
+            }
+            ctx.stroke();
+        }
+        
+        // Draw nodes
+        nodes.forEach(n => {
+            const p = nodePos[n];
+            const isConflict = conflictsAtHour[n];
+            const isOptimal = (n === bestTime);
+            const isStart = (n === startHour);
+            const inPath = path.includes(n);
+            
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 14, 0, Math.PI*2);
+            
+            if (isOptimal) {
+                ctx.fillStyle = '#10b981'; // Green for best slot
+            } else if (isStart) {
+                ctx.fillStyle = '#3b82f6'; // Blue for start slot
+            } else if (isConflict) {
+                ctx.fillStyle = '#ef4444'; // Red for conflict overlap
+            } else if (inPath) {
+                ctx.fillStyle = '#059669'; // Darker green for path node
+            } else {
+                ctx.fillStyle = '#4b5563'; // Gray for other nodes
+            }
+            
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = isOptimal ? 2 : 1;
+            ctx.stroke();
+            
+            // Draw hour text inside node (normalized to 24h wrap-around format)
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 8px Inter';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(n % 24, p.x, p.y);
+            
+            // Draw labels
+            if (isConflict) {
+                ctx.fillStyle = '#fca5a5';
+                ctx.font = '8px Inter';
+                ctx.fillText('⚡ Risk', p.x, p.y - 20);
+            }
+            if (isOptimal) {
+                ctx.fillStyle = '#6ee7b7';
+                ctx.font = 'bold 8px Inter';
+                ctx.fillText('Optimal', p.x, p.y - 20);
+            }
+            if (isStart) {
+                ctx.fillStyle = '#93c5fd';
+                ctx.font = 'bold 8px Inter';
+                ctx.fillText('Start', p.x, p.y - 20);
+            }
+        });
+    }
+
     let conflictText = '';
     if(med.conflicts.length > 0) {
         let cid = med.conflicts[0];
@@ -2238,6 +3011,23 @@ function confirmEmergencyReschedule(btn, medName, time) {
     btn.style.background = 'var(--success)';
     btn.style.color = 'white';
     
+    // Parse time (e.g. "3:00 PM") to 24h integer hour
+    let hour = 15;
+    const match = time.match(/(\d+):00\s*(AM|PM)/i);
+    if (match) {
+        let h = parseInt(match[1]);
+        const isPM = match[2].toUpperCase() === 'PM';
+        if (isPM && h !== 12) h += 12;
+        if (!isPM && h === 12) h = 0;
+        hour = h;
+    }
+    
+    const med = appState.medicines.find(m => m.name === medName);
+    if (med) {
+        med.rescheduled_hour_today = hour;
+        FirebaseApp.saveData();
+    }
+    
     setTimeout(() => {
         // Automatically switch back to Dashboard after 1.5 seconds
         const dashTab = document.querySelector('.nav-item[data-target="screen-dashboard"]');
@@ -2247,19 +3037,8 @@ function confirmEmergencyReschedule(btn, medName, time) {
         document.getElementById('emerg-results').innerHTML = `<div style="color:var(--text-muted); font-size:14px; text-align:center; padding:40px 0;">Select a missed medicine to see the optimal new time slots.</div>`;
         document.getElementById('emerg-terminal').innerHTML = '';
         
-        // Update the dashboard schedule visually
-        const doseLabels = Array.from(document.querySelectorAll('.dose-name'));
-        for(let i=0; i<doseLabels.length; i++) {
-            if(doseLabels[i].textContent.includes(medName)) {
-                doseLabels[i].style.textDecoration = 'none';
-                doseLabels[i].style.color = 'var(--text-main)';
-                const container = doseLabels[i].closest('div').parentElement;
-                if(container) {
-                    const actionsEl = container.querySelector('.dose-actions');
-                    if(actionsEl) actionsEl.innerHTML = `<span class="badge badge-amber" style="font-size:10px;">Rescheduled to ${time}</span>`;
-                }
-            }
-        }
+        // Refresh dashboard views
+        updateDashboard(appState.activePatient, appState.medicines);
     }, 1500);
 }
 
@@ -2281,14 +3060,47 @@ function runGraphColoring() {
     const colors = {};
     let maxColor = -1;
     let totalConflicts = 0, majorConflicts = 0, totalDeps = 0;
-    
+
+    // Build bidirectional undirected adjacencies and severities for proper graph coloring
+    const adjIds = {};
+    const severities = {};
+    nodes.forEach(n => {
+        adjIds[n.id] = new Set();
+        severities[n.id] = {};
+    });
+
+    nodes.forEach(n => {
+        n.conflicts.forEach(cid => {
+            adjIds[n.id].add(cid);
+            const other = nodes.find(x => x.id === cid);
+            if (other) {
+                adjIds[cid].add(n.id);
+                const sev = n.conflict_severity[cid] || other.conflict_severity[n.id] || 'moderate';
+                severities[n.id][cid] = sev;
+                severities[cid][n.id] = sev;
+            }
+        });
+    });
+
+    // Re-sort nodes by descending undirected degree (Welsh-Powell Greedy Order)
+    nodes.sort((a,b) => adjIds[b.id].size - adjIds[a.id].size);
+
+    if (logEl) {
+        logEl.innerHTML = `<div style="color:#818cf8;">> Initializing Welsh-Powell Graph Coloring...</div>`;
+        logEl.innerHTML += `<div style="color:#f59e0b; margin-top:8px;">> [Step 1] Sorted nodes by descending undirected degree (number of conflicts):</div>`;
+        logEl.innerHTML += `<div style="color:#94a3b8; margin-left:10px;">➔ ${nodes.map(n => `${n.name}(d:${adjIds[n.id].size})`).join(', ')}</div>`;
+        logEl.innerHTML += `<div style="color:#f59e0b; margin-top:8px;">> [Step 2] Assigning lowest available colors...</div>`;
+    }
+
     nodes.forEach(n => {
         const ncolors = new Set();
-        n.conflicts.forEach(c => { 
+        adjIds[n.id].forEach(c => { 
             if(colors[c]!==undefined) ncolors.add(colors[c]);
             if(n.id < c) {
                 totalConflicts++;
-                if(n.conflict_severity[c] === 'major') majorConflicts++;
+                if((severities[n.id] && severities[n.id][c] === 'major') || (severities[c] && severities[c][n.id] === 'major')) {
+                    majorConflicts++;
+                }
             }
         });
         n.must_after.forEach(d => { totalDeps++; });
@@ -2298,7 +3110,7 @@ function runGraphColoring() {
         if(c > maxColor) maxColor = c;
 
         if(logEl) {
-            logEl.innerHTML += `<div style="color:#e2e8f0; margin-left:10px;">> Evaluated <strong>${n.name}</strong>. Neighbor colors used: [${Array.from(ncolors).join(',')}] ➔ Assigned <span style="color:#10b981;">Color ${c}</span></div>`;
+            logEl.innerHTML += `<div style="color:#e2e8f0; margin-left:10px;">> Evaluated <strong>${n.name}</strong>. Neighbor colors used: [${Array.from(ncolors).map(x => `Color ${x}`).join(',') || 'None'}] ➔ Assigned <span style="color:#10b981;">Color ${c}</span></div>`;
         }
     });
 
@@ -2306,6 +3118,60 @@ function runGraphColoring() {
         logEl.innerHTML += `<div style="color:#10b981; margin-top:10px; font-weight:bold;">> ✅ Coloring Complete. Used ${maxColor+1} distinct time slots.</div>`;
         logEl.scrollTop = logEl.scrollHeight;
     }
+    
+    // exact chromatic number solver (Backtracking Brute-Force Optimal with bidirectional edges)
+    function findChromaticNumber(graphNodes) {
+        const adj = {};
+        graphNodes.forEach(n => { adj[n.id] = new Set(); });
+        
+        graphNodes.forEach(n => {
+            graphNodes.forEach(other => {
+                if (other.id !== n.id) {
+                    if (n.conflicts.includes(other.id) || other.conflicts.includes(n.id)) {
+                        adj[n.id].add(other.id);
+                        adj[other.id].add(n.id);
+                    }
+                }
+            });
+        });
+        
+        function canColor(k) {
+            const assignment = {};
+            function backtrack(nodeIdx) {
+                if (nodeIdx === graphNodes.length) return true;
+                const u = graphNodes[nodeIdx].id;
+                for (let c = 0; c < k; c++) {
+                    let hasConflict = false;
+                    for (const neighbor of adj[u]) {
+                        if (assignment[neighbor] === c) {
+                            hasConflict = true;
+                            break;
+                        }
+                    }
+                    if (!hasConflict) {
+                        assignment[u] = c;
+                        if (backtrack(nodeIdx + 1)) return true;
+                        delete assignment[u];
+                    }
+                }
+                return false;
+            }
+            return backtrack(0);
+        }
+        
+        for (let k = 1; k <= graphNodes.length; k++) {
+            if (canColor(k)) return k;
+        }
+        return graphNodes.length;
+    }
+
+    const greedySlots = maxColor + 1;
+    const optimalSlots = findChromaticNumber(nodes);
+
+    const elGreedy = document.getElementById('gc-greedy-res');
+    const elOptimal = document.getElementById('gc-optimal-res');
+    if (elGreedy) elGreedy.textContent = `${greedySlots} Slots`;
+    if (elOptimal) elOptimal.textContent = `${optimalSlots} Slots`;
     
     const gcSlots = document.getElementById('gc-slots'); if(gcSlots) gcSlots.textContent = maxColor + 1;
     const gcConf = document.getElementById('gc-conflicts'); if(gcConf) gcConf.textContent = totalConflicts;
@@ -2331,11 +3197,12 @@ function runGraphColoring() {
 
     // Draw edges
     nodes.forEach(n => {
-        n.conflicts.forEach(cid => {
+        adjIds[n.id].forEach(cid => {
             if(n.id < cid) {
                 const p1 = pos[n.id]; const p2 = pos[cid];
+                if (!p1 || !p2) return;
                 ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
-                const sev = n.conflict_severity[cid];
+                const sev = severities[n.id][cid] || 'moderate';
                 ctx.strokeStyle = sev === 'major' ? '#ef4444' : '#f59e0b';
                 ctx.lineWidth = sev === 'major' ? 3 : 2;
                 ctx.stroke();
@@ -2397,6 +3264,29 @@ function runOptimizer() {
     const opt = appState.medicines.filter(m=>!m.required);
     let reqCost=0, reqVal=0;
     req.forEach(m => { reqCost+=m.side_effect_score; reqVal+=m.therapeutic_value; });
+    
+    // Clinical Warning Display
+    const warnEl = document.getElementById('opt-budget-warning');
+    if(warnEl) {
+        if(reqCost > budget) {
+            warnEl.innerHTML = `
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <span style="font-size:24px;">⚠️</span>
+                    <div>
+                        <strong style="color:var(--danger); font-size:14px;">Clinical Alert: Mandatory Regimen Over Budget</strong>
+                        <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+                            The patient's mandatory (Required) medications alone carry a side-effect score of <strong>${reqCost}</strong>, which exceeds the selected budget of <strong>${budget}</strong> by <strong>${reqCost - budget}</strong> points. 
+                            Optional medications cannot be added. Review or edit medications to toggle their "Required" status.
+                        </div>
+                    </div>
+                </div>
+            `;
+            warnEl.style.display = 'block';
+        } else {
+            warnEl.style.display = 'none';
+        }
+    }
+
     let rem = Math.max(0, budget - reqCost);
     const n = opt.length;
     const dp = Array(n+1).fill(null).map(()=>Array(rem+1).fill(0));
@@ -2412,7 +3302,7 @@ function runOptimizer() {
     const tracebackSet = new Set();
     tracebackSet.add(`${n},${rem}`);
 
-    for(let i=n; i>0 && res>0; i--) {
+    for(let i=n; i>0; i--) {
         if(res !== dp[i-1][w]) { 
             selOpt.push(opt[i-1]); 
             res-=opt[i-1].therapeutic_value; 
@@ -2475,8 +3365,24 @@ function runOptimizer() {
 function openMedModal(id = null) {
     const modal = document.getElementById('med-modal');
     modal.style.display = 'flex';
+
+    // Always reset DB search state
+    const dbInput = document.getElementById('db-search-input');
+    if(dbInput) dbInput.value = '';
+    const dbDD = document.getElementById('db-dropdown');
+    if(dbDD) dbDD.style.display = 'none';
+    const badge = document.getElementById('db-selected-badge');
+    if(badge) badge.style.display = 'none';
+    const warn = document.getElementById('db-conflict-warning');
+    if(warn) warn.style.display = 'none';
+    window._selectedDBEntry = null;
+
+    // Show/hide DB search section (only for Add, not Edit)
+    const dbSection = document.getElementById('db-search-section');
+
     if(id) {
         document.getElementById('modal-title').textContent = 'Edit Medicine';
+        if(dbSection) dbSection.style.display = 'none';
         const med = appState.medicines.find(m => m.id === id);
         if(med) {
             document.getElementById('modal-med-id').value = med.id;
@@ -2488,9 +3394,11 @@ function openMedModal(id = null) {
             document.getElementById('modal-med-se').value = med.side_effect_score;
             document.getElementById('modal-med-tv').value = med.therapeutic_value;
             document.getElementById('modal-med-qty').value = med.current_quantity;
+            document.getElementById('modal-med-required').checked = !!med.required;
         }
     } else {
         document.getElementById('modal-title').textContent = 'Add Medicine';
+        if(dbSection) dbSection.style.display = 'block';
         document.getElementById('modal-med-id').value = '';
         document.getElementById('modal-med-name').value = '';
         document.getElementById('modal-med-desc').value = '';
@@ -2500,63 +3408,225 @@ function openMedModal(id = null) {
         document.getElementById('modal-med-se').value = 3;
         document.getElementById('modal-med-tv').value = 7;
         document.getElementById('modal-med-qty').value = 30;
+        document.getElementById('modal-med-required').checked = false;
     }
+}
+
+// ── Database Search Autocomplete ──
+function onDBSearch(query) {
+    const dropdown = document.getElementById('db-dropdown');
+    if(!query || query.length < 1) { dropdown.style.display = 'none'; return; }
+
+    const q = query.toLowerCase();
+
+    // First: Boyer-Moore substring match
+    let results = MEDICINE_DATABASE.filter(m =>
+        boyerMooreSearch(m.name.toLowerCase(), q) !== -1 ||
+        boyerMooreSearch(m.category.toLowerCase(), q) !== -1
+    );
+
+    // Fallback: Edit Distance fuzzy match
+    if(results.length === 0) {
+        results = MEDICINE_DATABASE.filter(m => {
+            const name = m.name.toLowerCase();
+            let minDist = editDistance(name, q);
+            for(let i = 0; i <= name.length - q.length; i++)
+                minDist = Math.min(minDist, editDistance(name.substring(i, i + q.length), q));
+            return minDist <= 2;
+        });
+    }
+
+    if(results.length === 0) { dropdown.style.display = 'none'; return; }
+
+    const catColors = {
+        'ACE Inhibitor':'#4f6ef7','Beta Blocker':'#6d28d9','Calcium Channel Blocker':'#7c3aed',
+        'CCB (Non-DHP)':'#7c3aed','Thiazide Diuretic':'#0891b2','Loop Diuretic':'#0891b2',
+        'ARB':'#4f6ef7','K-sparing Diuretic':'#0891b2','Antidiabetic (Biguanide)':'#10b981',
+        'Sulfonylurea':'#10b981','DPP-4 Inhibitor':'#10b981','Long-acting Insulin':'#10b981',
+        'Anticoagulant':'#dc2626','NOAC (Factor Xa Inhibitor)':'#dc2626','Antiplatelet':'#ef4444',
+        'Anticoagulant (Parenteral)':'#dc2626','NSAID / Antiplatelet':'#f59e0b',
+        'NSAID':'#f59e0b','Analgesic / Antipyretic':'#64748b','Opioid Analgesic':'#7c3aed',
+        'Proton Pump Inhibitor':'#0891b2','H2 Receptor Blocker':'#0891b2',
+        'Cardiac Glycoside':'#dc2626','Statin':'#0891b2','Antiarrhythmic (Class III)':'#dc2626',
+        'Nitrate':'#ef4444','Antiepileptic':'#8b5cf6','Antiepileptic / Mood':'#8b5cf6',
+        'Antibiotic (Penicillin)':'#10b981','Antibiotic (Fluoroquinolone)':'#f59e0b',
+        'Antibiotic (Macrolide)':'#10b981','Antibiotic (Tetracycline)':'#f59e0b',
+        'Thyroid Hormone':'#ec4899','SSRI Antidepressant':'#8b5cf6','Benzodiazepine':'#6d28d9',
+        'Supplement':'#64748b'
+    };
+
+    dropdown.innerHTML = results.slice(0, 12).map(m => {
+        const col = catColors[m.category] || '#64748b';
+        const hasConflict = detectConflictsForEntry(m).length > 0;
+        return `<div onclick="selectFromDB('${m.name.replace(/'/g,"\\'")}')"
+            style="padding:10px 14px; cursor:pointer; border-bottom:1px solid var(--border); transition:background 0.15s; display:flex; align-items:center; gap:10px;"
+            onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background='white'">
+            <div style="width:8px;height:8px;border-radius:50%;background:${col};flex-shrink:0;"></div>
+            <div style="flex:1;min-width:0;">
+                <div style="font-weight:700;font-size:13px;color:var(--text-main);">${m.name} <span style="font-size:11px;color:${col};font-weight:600;">${m.dosage}</span></div>
+                <div style="font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${m.category}</div>
+            </div>
+            ${hasConflict ? '<span style="font-size:11px;background:#fef2f2;color:var(--danger);padding:2px 7px;border-radius:6px;font-weight:700;flex-shrink:0;">⚡ Conflict</span>' : ''}
+        </div>`;
+    }).join('');
+    dropdown.style.display = 'block';
+}
+
+// Returns conflict objects for a given DB entry vs current patient medicines
+function detectConflictsForEntry(dbEntry) {
+    const found = [];
+    if(!dbEntry || !dbEntry.known_conflicts) return found;
+    appState.medicines.forEach(existing => {
+        let sev = dbEntry.known_conflicts[existing.name];
+        if(!sev) {
+            const existingDB = findInDB(existing.name);
+            if(existingDB && existingDB.known_conflicts && existingDB.known_conflicts[dbEntry.name])
+                sev = existingDB.known_conflicts[dbEntry.name];
+        }
+        if(sev && !found.find(f => f.existingMed.id === existing.id))
+            found.push({ existingMed: existing, severity: sev });
+    });
+    return found;
+}
+
+// Auto-fill all form fields from selected DB entry + show conflict warnings
+function selectFromDB(name) {
+    const entry = MEDICINE_DATABASE.find(m => m.name === name);
+    if(!entry) return;
+
+    window._selectedDBEntry = entry;
+    document.getElementById('db-dropdown').style.display = 'none';
+    document.getElementById('db-search-input').value = entry.name;
+
+    // Auto-fill fields
+    document.getElementById('modal-med-name').value = entry.name;
+    document.getElementById('modal-med-desc').value = entry.category + ' | ' + entry.desc;
+    document.getElementById('modal-med-amount').value = entry.dosage;
+    document.getElementById('modal-med-doses').value = entry.doses_per_day;
+    document.getElementById('modal-med-food').value = entry.food_rule;
+    document.getElementById('modal-med-se').value = entry.side_effect_score;
+    document.getElementById('modal-med-tv').value = entry.therapeutic_value;
+
+    // Show badge
+    const badge = document.getElementById('db-selected-badge');
+    document.getElementById('db-badge-text').textContent = `${entry.name} — ${entry.category} | loaded from database`;
+    badge.style.display = 'flex';
+
+    // Conflict detection
+    const conflicts = detectConflictsForEntry(entry);
+    const warnEl = document.getElementById('db-conflict-warning');
+    const listEl = document.getElementById('db-conflict-list');
+
+    if(conflicts.length > 0) {
+        listEl.innerHTML = conflicts.map(c => {
+            const isMajor = c.severity === 'major';
+            const col = isMajor ? 'var(--danger)' : (c.severity === 'moderate' ? '#92400e' : 'var(--info)');
+            const bg  = isMajor ? '#fef2f2' : (c.severity === 'moderate' ? '#fffbeb' : '#eff6ff');
+            const icon = isMajor ? '🚨' : (c.severity === 'moderate' ? '⚠️' : 'ℹ️');
+            return `<div style="padding:8px 10px;background:${bg};border-radius:6px;font-size:12px;font-weight:700;color:${col};">
+                ${icon} <strong>${entry.name}</strong> + <strong>${c.existingMed.name}</strong>
+                — <span style="text-transform:capitalize;">${c.severity}</span> interaction
+                <div style="font-size:11px;font-weight:500;color:var(--text-muted);margin-top:3px;">
+                    Conflict will be recorded. Graph Coloring will assign separate time slots automatically.
+                </div>
+            </div>`;
+        }).join('');
+        warnEl.style.display = 'block';
+    } else {
+        warnEl.style.display = 'none';
+    }
+}
+
+function clearDBSelection() {
+    window._selectedDBEntry = null;
+    document.getElementById('db-search-input').value = '';
+    document.getElementById('db-dropdown').style.display = 'none';
+    document.getElementById('db-selected-badge').style.display = 'none';
+    document.getElementById('db-conflict-warning').style.display = 'none';
+    document.getElementById('modal-med-name').value = '';
+    document.getElementById('modal-med-desc').value = '';
+    document.getElementById('modal-med-amount').value = '';
+    document.getElementById('modal-med-doses').value = 1;
+    document.getElementById('modal-med-food').value = 'any';
+    document.getElementById('modal-med-se').value = 3;
+    document.getElementById('modal-med-tv').value = 7;
 }
 
 function closeMedModal() {
     document.getElementById('med-modal').style.display = 'none';
+    const dd = document.getElementById('db-dropdown');
+    if(dd) dd.style.display = 'none';
 }
+
+// Close dropdown on outside click
+document.addEventListener('click', (e) => {
+    const dd = document.getElementById('db-dropdown');
+    const inp = document.getElementById('db-search-input');
+    if(dd && inp && !inp.contains(e.target) && !dd.contains(e.target))
+        dd.style.display = 'none';
+});
 
 function saveMedModal() {
     const idVal = document.getElementById('modal-med-id').value;
     const name = document.getElementById('modal-med-name').value.trim();
     if(!name) { alert("Please enter a medicine name."); return; }
 
-    const desc = document.getElementById('modal-med-desc').value.trim();
-    const amount = document.getElementById('modal-med-amount').value.trim();
+    const desc  = document.getElementById('modal-med-desc').value.trim();
+    const amount= document.getElementById('modal-med-amount').value.trim();
     const doses = parseInt(document.getElementById('modal-med-doses').value) || 1;
-    const food = document.getElementById('modal-med-food').value;
-    const se = parseInt(document.getElementById('modal-med-se').value) || 3;
-    const tv = parseInt(document.getElementById('modal-med-tv').value) || 7;
-    const qty = parseInt(document.getElementById('modal-med-qty').value) || 30;
+    const food  = document.getElementById('modal-med-food').value;
+    const se    = parseInt(document.getElementById('modal-med-se').value) || 3;
+    const tv    = parseInt(document.getElementById('modal-med-tv').value) || 7;
+    const qty   = parseInt(document.getElementById('modal-med-qty').value) || 30;
+    const reqChecked = document.getElementById('modal-med-required').checked;
 
     if(idVal) {
-        // Edit existing
+        // ── Edit existing ──
         const med = appState.medicines.find(m => m.id === parseInt(idVal));
         if(med) {
-            med.name = name;
-            med.desc = desc;
-            med.dosage = amount;
-            med.doses_per_day = doses;
-            med.food_rule = food;
-            med.side_effect_score = se;
-            med.therapeutic_value = tv;
-            med.current_quantity = qty;
-            // Dose gap adjustment based on doses
+            med.name = name; med.desc = desc; med.dosage = amount;
+            med.doses_per_day = doses; med.food_rule = food;
+            med.side_effect_score = se; med.therapeutic_value = tv;
+            med.current_quantity = qty; med.required = reqChecked;
             med.dose_gap_hours = doses === 1 ? 24 : (doses === 2 ? 12 : 8);
         }
     } else {
-        // Add new
+        // ── Add new medicine ──
+        const newId = Math.floor(Math.random() * 10000) + 100;
         const newMed = {
-            id: Math.floor(Math.random() * 10000) + 100,
-            name: name,
-            desc: desc || "Added manually",
-            dosage: amount || "Unknown",
-            doses_per_day: doses,
+            id: newId, name, desc: desc || 'Added manually',
+            dosage: amount || 'Unknown', doses_per_day: doses,
             dose_gap_hours: doses === 1 ? 24 : (doses === 2 ? 12 : 8),
-            window: [8, 20],
-            food_rule: food,
-            side_effect_score: se,
-            therapeutic_value: tv,
-            required: true,
-            conflicts: [],
-            conflict_severity: {},
-            must_after: [],
-            current_quantity: qty
+            window: [8, 20], food_rule: food, side_effect_score: se,
+            therapeutic_value: tv, required: reqChecked,
+            conflicts: [], conflict_severity: {}, must_after: [], current_quantity: qty
         };
+
+        // ── AUTO-WIRE conflicts from database knowledge ──
+        if(window._selectedDBEntry) {
+            const dbEntry = window._selectedDBEntry;
+            appState.medicines.forEach(existing => {
+                let sev = (dbEntry.known_conflicts || {})[existing.name];
+                if(!sev) {
+                    const eDB = findInDB(existing.name);
+                    if(eDB && eDB.known_conflicts && eDB.known_conflicts[name])
+                        sev = eDB.known_conflicts[name];
+                }
+                if(sev) {
+                    newMed.conflicts.push(existing.id);
+                    newMed.conflict_severity[existing.id] = sev;
+                    if(!existing.conflicts.includes(newId)) {
+                        existing.conflicts.push(newId);
+                        existing.conflict_severity[newId] = sev;
+                    }
+                }
+            });
+        }
+
         appState.medicines.push(newMed);
     }
 
+    window._selectedDBEntry = null;
     closeMedModal();
     FirebaseApp.saveData();
     updateDashboard(appState.activePatient, appState.medicines);
